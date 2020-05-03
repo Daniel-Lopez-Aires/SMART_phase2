@@ -42,8 +42,8 @@ tic
             
     %2) Greenwald fraction
     
-                Gr_fraction=0.15%0.15;                              %This is to scale the Gr_limit==> <=1
-    
+                Gr_fraction=0.7%0.15;                              %This is to scale the Gr_limit==> <=1
+                                        %0.7 to match Elis calc
     %3) a_eff                                                        %[m] This defines the size of the field null region.
    
              %a_eff=0.05;                                   % little null region WHAT JJ USED, ST25D BASED
@@ -67,7 +67,7 @@ ProjectName = 'SMART-P2-9L';			%Define global project name
 %SeriesName = 'VaryTauP';		%Define parameter scan series name
 
 %Create global output folders for saved data and figures
-ASCIIDir = 'RawData/'; mkdir(ASCIIDir);
+%ASCIIDir = 'RawData/'; mkdir(ASCIIDir);
 %FigDir = 'Figures/'; mkdir(FigDir);			%NOT CURRENTLY USED
 
 %Create simulation name based upon relevant run parameters
@@ -324,13 +324,16 @@ coilset = fiesta_coilset('STcoilset',[Sol_circuit,PF1,PF2,Div1,Div2],false,xaccu
         %touches the outer (R max) wall
     
 %%%PF coil currents (At Equilibrium, time(5,6))                                                   [A]
-I_PF1_Equil=-500;					%EFIT WILL GIVE IT!
-I_PF2_Equil=-3e3;					%EFIT WILL GIVE IT!
+I_PF1_Equil=-1.5e3;					%First guess, efit will found it. 
+I_PF2_Equil=-.5e3;					%First guess, efit will found it. 
+                                               %These first guesses have to
+                                               %be accurate!!!! It affects
+                                               %the results!!!!!!!!!
 %I_Div1_Equil=NaN;					Div1 in series with Sol!
-I_Div2_Equil=+4e3;			%4e3 do not work		
+I_Div2_Equil=+3.3e3;			%4e3 		
 
 %%%Sol current
- I_Sol_max =2.5e3  %.953; .91 for short break                  %[A] Max solenoid current, to achieve the desire Ip in RZIp.
+ I_Sol_max =3.5e3%2.5e3                %[A] Max solenoid current, to achieve the desire Ip in RZIp.
 ISol_equil=-I_Sol_max;%.05e3;                            % [A] the current of the Sol in the target eq calc
 %If>0, Sol will attract the plasma, no lower PF and DIv are
 %needed.
@@ -461,7 +464,7 @@ icoil_equil.Div2=CoilWaveforms(5,6);	%Div2 Equilibrium Current at time(5,6)
     %Discovered by Juanjo Toledo Garcia
     
     %[efit_config, signals, weights, index]=fiesta_efit_configuration(config, {'PF1','PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2])
-    [efit_config, signals, weights, index]=efit_shape_controller(config, {'PF1','PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2])
+    [efit_config, signals, weights, index]=efit_shape_controller(config, {'PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2])
     
     % The numbers you give are [Rgeo, Zgeo, a, kappa, delta], Rgeo,Zgeo,a are
     % mandatory.
@@ -510,8 +513,8 @@ icoil_equil.Div2=CoilWaveforms(5,6);	%Div2 Equilibrium Current at time(5,6)
         plot(coilset)
         title('Target equilibria phase 2')
             %Watch out, R0 in the plot is r0_mag, not r0_geom!!
-        %Filename = '_TargetEquilibrium';
-        %saveas(gcf, strcat(ProjectName,Filename,FigExt));
+        Filename = '_TargetEquilibrium';
+        saveas(gcf, strcat(ProjectName,Filename,FigExt));
 %Equilibrium parameters
 
 parameters(equil); %its better in this way, because it shows units and coil currents. If you define a variable, it wont do that
@@ -583,7 +586,7 @@ z_sensors=get(sensor_btheta,'z'); %size 1*200
     %set(gca,'YLim',[-1.5 1.5]);
     xlabel(gca,'R (m)');
     ylabel(gca,'Z (m)');
-    title('Target equilibria phase 1 with sensors to null Bpol');
+    title('Target equilibria phase 2 with sensors to null Bpol');
     % save_to_pdf( gcf, fileName );
     %%%OPtionf for tfg
     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
@@ -639,8 +642,8 @@ V_PF_input = NaN(nTime,nPF);            %Coil voltages are initiated to zero
     %%%optinos for tfg
     set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
     set(gca, 'FontSize', 13, 'LineWidth', 0.75);                    %<- Set properties TFG
-    %Filename = '_InputCurrents';
-    %saveas(gcf, strcat(ProjectName,Filename,FigExt));
+    Filename = '_InputCurrents';
+    saveas(gcf, strcat(ProjectName,Filename,FigExt));
 
 
 
@@ -721,7 +724,7 @@ I_Passive_VV=sum(I_Passive,2);
             %hold on
             plot(time_adaptive*1e3,Ip_output/(1e3))
             ylabel('I (kA)')
-            title('Dynamic response SST phase 1')
+            title('Dynamic response SST phase 2')
             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
             %set(gca,'YLim',[-5 35]);
             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
@@ -913,61 +916,61 @@ I_Passive_VV=sum(I_Passive,2);
 %% EDDY CURRENTS ON THE VESSEL%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Get the filament variables r and z
-% ptmp = get(vessel,'passives');
-% ftmp = get(ptmp,'filaments');
-% Rfil = get(ftmp(:),'r'); %dim 1*number of filaments; number of filaments=nf
-% Zfil = get(ftmp(:),'z'); %dim 1*number of filaments
-% %Note Rfil and Zfil are xaccum and yaccum, but transposed!!
-% 
-% %dim I_Passive= 3811*nf, and time adaptative is
-% %3811*1. So, I_Passive contains the eddy current of the nf filaments at
-% %each instant of time.
-% 
-% %Okay. We do have the eddy current on each filament an on every time on
-% %I_Passive. I_passive on the figures is sum over each filament of the eddy
-% %current, to get the total eddy current induced upon each time. We can not
-% %sum for every time the eddy current, since it varys its sign, it also
-% %ceases during certain amounts of tim, so it can not be done.  But there is
-% %no necesssity, since I_passive contains the eddy current at any time of
-% %the filament, and this will also provide the force upon each instant; i
-% %only need to pick up the greatest
-% 
-% sizeIpas=size(I_Passive); %number of time intervals*number of filaments
-% 
-% for i=1:sizeIpas(2) % for each filament
-%     %To decide if the largest value is positive or engative, i could chose
-%     %the max and the min, and compare its absolute value, and store the
-%     %greates
-%  
-%     positive=max(I_Passive(:,i));
-%     negative=min(I_Passive(:,i));
-%     
-%     if abs(positive)> abs(negative)
-%         
-%   I_Passive_fil(i)=positive;
-%     else
-%         I_Passive_fil(i)=negative;
-%     end
-% end
-% %This have just stored the largest values of the eddy currents on all the
-% %filaments.
-% 
-% figure;
-%  scatter3(Rfil,Zfil,I_Passive_fil/(1e3),100,I_Passive_fil/(1e3),'filled')
-%  hold on
-%  plot(coilset)
-%   view(2) %2D view
-%  colorbar %colorbar
-% xlabel(' R (m)')
-% ylabel('Z (m)')
-% %zlabel('I (A)')
-% axis([0,1.03,-1.1,1.1]) %for the tfg EDDY Y FORCES
-% title('Eddy current in the vessel in kA')
-% set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-%grid off
-%print -depsc2 NOMBREPLOT.eps
+ptmp = get(vessel,'passives');
+ftmp = get(ptmp,'filaments');
+Rfil = get(ftmp(:),'r'); %dim 1*number of filaments; number of filaments=nf
+Zfil = get(ftmp(:),'z'); %dim 1*number of filaments
+%Note Rfil and Zfil are xaccum and yaccum, but transposed!!
 
-%%%%Plot for each instant
+%dim I_Passive= 3811*nf, and time adaptative is
+%3811*1. So, I_Passive contains the eddy current of the nf filaments at
+%each instant of time.
+
+%Okay. We do have the eddy current on each filament an on every time on
+%I_Passive. I_passive on the figures is sum over each filament of the eddy
+%current, to get the total eddy current induced upon each time. We can not
+%sum for every time the eddy current, since it varys its sign, it also
+%ceases during certain amounts of tim, so it can not be done.  But there is
+%no necesssity, since I_passive contains the eddy current at any time of
+%the filament, and this will also provide the force upon each instant; i
+%only need to pick up the greatest
+
+sizeIpas=size(I_Passive); %number of time intervals*number of filaments
+
+for i=1:sizeIpas(2) % for each filament
+    %To decide if the largest value is positive or engative, i could chose
+    %the max and the min, and compare its absolute value, and store the
+    %greates
+ 
+    positive=max(I_Passive(:,i));
+    negative=min(I_Passive(:,i));
+    
+    if abs(positive)> abs(negative)
+        
+  I_Passive_fil(i)=positive;
+    else
+        I_Passive_fil(i)=negative;
+    end
+end
+%This have just stored the largest values of the eddy currents on all the
+%filaments.
+
+figure;
+ scatter3(Rfil,Zfil,I_Passive_fil/(1e3),100,I_Passive_fil/(1e3),'filled')
+ hold on
+ plot(coilset)
+  view(2) %2D view
+ colorbar %colorbar
+xlabel(' R (m)')
+ylabel('Z (m)')
+%zlabel('I (A)')
+axis([0,1.03,-1.1,1.1]) %for the tfg EDDY Y FORCES
+title('Eddy current in the vessel in kA')
+set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+grid off
+print -depsc2 NOMBREPLOT.eps
+
+%%%Plot for each instant
 % for i=1:5%length(time_adaptive)
 % figure;
 % acumm=I_Passive(i,:)+acumm
@@ -985,83 +988,83 @@ I_Passive_VV=sum(I_Passive,2);
 %For doing that, we firsly obtain the field, from the equilibrium:
 
 %%%Field
-% Br=get(equil,'Br'); %Here is it a fiesta_field,containig Br, in all points of the grid
-% Bz=get(equil,'Bz'); 
-% Bphi=get(equil,'Bphi'); 
-% 
-% Brdata = get(get(equil,'Br'),'data'); %Note this is 200*251, GridR*GridZ dimension
-% Bzdata = get(get(equil,'Bz'),'data');
-% Bphidata = get(get(equil,'Bphi'),'data');
-% 
-% %%Field values, sized Grid_size_R*Grid_size_Z, as expected.
-% %However, It is neccesary to reshape it in orden to do the interpolation:
-% Brdata = reshape( Brdata, length(zGrid), length(rGrid)); %251*200
-% Bzdata = reshape( Bzdata, length(zGrid), length(rGrid)); %251*200
-% Bphidata = reshape( Bphidata, length(zGrid), length(rGrid)); %251*200
-% 
-% %this are the value of the field in the grid points, but we want its value
-% %at the vessel. How do we calculate that? The easiest way (I wonder
-% %wether it can be done by another way) is to interpolate the data; Carlos came
-% %up with:
-% 
-% Br_interp = @(r,z) interpn(zGrid,rGrid,Brdata,z,r);
-% Bz_interp = @(r,z) interpn(zGrid,rGrid,Bzdata,z,r);
-% Bphi_interp = @(r,z) interpn(zGrid,rGrid,Bphidata,z,r);
-% 
-% %So the field at the vessel is:
-% 
-% Br_vessel=Br_interp(Rfil,Zfil);
-% Bz_vessel=Bz_interp(Rfil,Zfil);
-% Bphi_vessel=Bphi_interp(Rfil,Zfil);
-% B_vessel=[Br_vessel' Bphi_vessel' Bz_vessel']; 
-% %size(number of filaments*3), each row is the vector field on one filament
-% 
-% %Current
-% %The maximun currrent on each filament is I_Passive_fil 
-% %(size 1*number of filaments), whose unit vector is fi, so the vector
-% %would be in cylindrical
-% 
-% I_passive_fil_vec=I_Passive_fil'*[0 1 0]; %size number of filaments*3
-% 
-% %The force upon the cross-scetion of filament would then be
-% 
-% Force_fil=cross(I_passive_fil_vec,B_vessel); %size number of filaments*3, 
-% %so this is the force acting upon every filament
-% 
-% %The force upon all the filament would be 2piR*Force_fil_cross. R is stores
-% %in RR, which contains all the R values in a vector form with number of fil components. 
-% %Force_fil_cross is a vector of 3 components. It would be difficult to
-% %multiply them, but we do not need to, right now, because to obtain the
-% %pressure R cancles out, since the areas are 2piR*anchura (or altura). We
-% %assimilate the 3D filament as a 2D filament, so that it has no width in
-% %the R axis, s that its surface is 2piR*altura
-% 
-% %%%%Stresses
-% %This is th eplot of the pressures, much more better
-% %THIS ARE STRESSES, NOT PRESSURES!!!!
-% 
-% stress_R=(Force_fil(:,1))/(height_PF); 
-% %have the sign, to indicate wether goes to the inside or to the outside
-% stress_Z=(Force_fil(:,3))/(height_PF);
-% 
-% stress_Z_max=max(abs(stress_Z))
-% stress_R_max=max(abs(stress_R))
-% 
-% %plot
-% figure; 
-%  scale_factor=2*10^5; %graphic needs to be scaled
-% quiver(xaccum,yaccum,stress_R/scale_factor,stress_Z/scale_factor,'color',[1 0 0],'AutoScale','off')
-% hold on;
-% plot(coilset)
-% plot(vessel);
-% xlabel('R (m)')
-% ylabel('Z (m)')
-% axis([-0.1,1.05,-1.3,1.3]) %for the tfg  EDDY Y FORCES
-% axis equal
-% set(gca,'XLim',[-0.5 1.5]);
-% title('Stresses on the vessel for phase 2')
-% set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-% %print -depsc2 NOMBREPLOT.eps
+Br=get(equil,'Br'); %Here is it a fiesta_field,containig Br, in all points of the grid
+Bz=get(equil,'Bz'); 
+Bphi=get(equil,'Bphi'); 
+
+Brdata = get(get(equil,'Br'),'data'); %Note this is 200*251, GridR*GridZ dimension
+Bzdata = get(get(equil,'Bz'),'data');
+Bphidata = get(get(equil,'Bphi'),'data');
+
+%%Field values, sized Grid_size_R*Grid_size_Z, as expected.
+%However, It is neccesary to reshape it in orden to do the interpolation:
+Brdata = reshape( Brdata, length(zGrid), length(rGrid)); %251*200
+Bzdata = reshape( Bzdata, length(zGrid), length(rGrid)); %251*200
+Bphidata = reshape( Bphidata, length(zGrid), length(rGrid)); %251*200
+
+%this are the value of the field in the grid points, but we want its value
+%at the vessel. How do we calculate that? The easiest way (I wonder
+%wether it can be done by another way) is to interpolate the data; Carlos came
+%up with:
+
+Br_interp = @(r,z) interpn(zGrid,rGrid,Brdata,z,r);
+Bz_interp = @(r,z) interpn(zGrid,rGrid,Bzdata,z,r);
+Bphi_interp = @(r,z) interpn(zGrid,rGrid,Bphidata,z,r);
+
+%So the field at the vessel is:
+
+Br_vessel=Br_interp(Rfil,Zfil);
+Bz_vessel=Bz_interp(Rfil,Zfil);
+Bphi_vessel=Bphi_interp(Rfil,Zfil);
+B_vessel=[Br_vessel' Bphi_vessel' Bz_vessel']; 
+%size(number of filaments*3), each row is the vector field on one filament
+
+%Current
+%The maximun currrent on each filament is I_Passive_fil 
+%(size 1*number of filaments), whose unit vector is fi, so the vector
+%would be in cylindrical
+
+I_passive_fil_vec=I_Passive_fil'*[0 1 0]; %size number of filaments*3
+
+%The force upon the cross-scetion of filament would then be
+
+Force_fil=cross(I_passive_fil_vec,B_vessel); %size number of filaments*3, 
+%so this is the force acting upon every filament
+
+%The force upon all the filament would be 2piR*Force_fil_cross. R is stores
+%in RR, which contains all the R values in a vector form with number of fil components. 
+%Force_fil_cross is a vector of 3 components. It would be difficult to
+%multiply them, but we do not need to, right now, because to obtain the
+%pressure R cancles out, since the areas are 2piR*anchura (or altura). We
+%assimilate the 3D filament as a 2D filament, so that it has no width in
+%the R axis, s that its surface is 2piR*altura
+
+%%%%Stresses
+%This is th eplot of the pressures, much more better
+%THIS ARE STRESSES, NOT PRESSURES!!!!
+
+stress_R=(Force_fil(:,1))/(height_PF); 
+%have the sign, to indicate wether goes to the inside or to the outside
+stress_Z=(Force_fil(:,3))/(height_PF);
+
+stress_Z_max=max(abs(stress_Z))
+stress_R_max=max(abs(stress_R))
+
+%plot
+figure; 
+ scale_factor=2*10^5; %graphic needs to be scaled
+quiver(xaccum,yaccum,stress_R/scale_factor,stress_Z/scale_factor,'color',[1 0 0],'AutoScale','off')
+hold on;
+plot(coilset)
+plot(vessel);
+xlabel('R (m)')
+ylabel('Z (m)')
+axis([-0.1,1.05,-1.3,1.3]) %for the tfg  EDDY Y FORCES
+axis equal
+set(gca,'XLim',[-0.5 1.5]);
+title('Stresses on the vessel for phase 2')
+set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+%print -depsc2 NOMBREPLOT.eps
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1310,7 +1313,7 @@ Bpol_sensor=sqrt(Br_sensor.^2+Bz_sensor.^2);
  %Plot Bpol y Bphi   
     figure; 
     subplot(1,2,1)
-    surf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'FaceAlpha',0.5,'EdgeColor','none');
+    surf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none');
     shading('interp') %this is to make the transition between values continuous,
     %instedad of discontinuously between pixels
     hold on;
@@ -1323,7 +1326,7 @@ Bpol_sensor=sqrt(Br_sensor.^2+Bz_sensor.^2);
     ylabel('Z (m)')
     title('log_{10}(Bpol) mikama')
     subplot(1,2,2)
-    surf(R_in,Z_in,Bphi_ins_vessel,'FaceAlpha',0.5,'EdgeColor','none');
+    surf(R_in,Z_in,Bphi_ins_vessel,'EdgeColor','none');
     shading('interp') %this is to make the transition between values continuous,
     %instedad of discontinuously between pixels    
     hold on;
@@ -1529,16 +1532,15 @@ set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
     hold on
     shading('interp')                       %this is to make the transition between values continuous,
                                                         %instedad of discontinuously between pixels
-    %plot3(RZ_no_collide(:,1),RZ_no_collide(:,2),...
-    %    max(RZL_lastTEST(:,3))*ones(length(RZ_no_collide(:,1)),1),...
-    %    'm*','MarkerSize',7)
+    plot3(RZ_no_collide(:,1),RZ_no_collide(:,2),...
+        max(RZL_lastTEST(:,3))*ones(length(RZ_no_collide(:,1)),1),...
+        'm*','MarkerSize',7)
     plot3([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],...
     ones(1,5)*max(RZL_lastTEST(:,3)),'r.--')
     hh=plot(vessel);
     set(get(get(hh(2),'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
-    %legend('L (m)','Not colliding starting points','Field null region')  
-    legend('L (m)','Field null region')  
+    legend('L (m)','Not colliding starting points','Field null region')  
     view(2) %2D view
     colorbar
     %caxis([min(RZ_no_collide(:,3)),max(RZ_no_collide(:,3))])
