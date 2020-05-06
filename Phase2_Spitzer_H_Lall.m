@@ -606,12 +606,30 @@ rzip_config = fiesta_rzip_configuration( 'RZIP', config, vessel, {sensor_btheta}
 
 %%%%%%  Optimised null  currents%%%%%%%%%%%%
 %Extract scaling factors for null-field coil currents - Copied from ST25D Simulation
-C_temp = C(end-get(sensor_btheta,'n')+1:end,1:nPF);
-C1 = C_temp(:,1);
-D1 = C_temp(:,2:end);
-%Compute PF null coil currents (excluding Solenoid) 
-I_PF_null = -pinv(D1) * (C1*ISol_Waveform(2));	%(PF1,PF2,Div1,Div2)
+C_temp = C(end-get(sensor_btheta,'n')+1:end,1:nPF);             %This ic Cn(:,1:nPF) 
+                                                  %Cn is the part of the matrix C related to the sensors
+                                                  %(see response)
+C1 = C_temp(:,iSol);                               %Elements of C_temp(Cn) related to Sol coil
 
+D1_PF1 = C_temp(:,iPF1);                            %Elements of C_temp(Cn) to PF1 coil
+D1_PF2 = C_temp(:,iPF2);                            %Elements of C_temp(Cn) to PF2 coil
+D1_Div1 = C_temp(:,iDiv1);                          %Elements of C_temp(Cn) to Div1 coil
+D1_Div2 = C_temp(:,iDiv2);                          %Elements of C_temp(Cn) to Div2 coil
+
+    %1) Compute all the coil currents (standar)
+        %D1=C_temp(:,iPF1:end);          %Elements of C_temp(Cn) related to the PF and Div coils
+        %I_PF_null = -pinv(D1) * (C1*ISol_Waveform(2));	%(PF1,PF2,Div1,Div2)
+
+    %2)Div1 in serie with Sol! :
+        %Since we want Div1 in serie with Sol, it should be reomved from the matrix
+        %to do the calc:
+        D1=[D1_PF1 D1_PF2 D1_Div2];                     %This is for Div1 in series with Sol, so 
+                                                                    %must not include it in the calculation for the currents                                                                                                                 
+        I_PF_null = -pinv(D1) * (C1*ISol_Waveform(2)+D1_Div1*ISol_Waveform(2));	%Div1 in serie with Sol
+        I_PF_null=[I_PF_null(1); I_PF_null(2); ISol_Waveform(2); I_PF_null(3)]; %To not have problems
+        
+        %redefining the coil currents
+%%%%%%
 %Update CoilWaveforms array with null-field values
 for i = 1:nPF;
 	for j = 1:nTime;
@@ -784,99 +802,96 @@ I_Passive_VV=sum(I_Passive,2);
     icoil_eddy = fiesta_icoil( coilsetVV, coil_currents_eddys );
     
     %%%1) EFIT
-%     [efit_configVV, signalsVV, weightsVV, indexVV]=efit_shape_controller(configVV, {'PF1','PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2])
-%     % The numbers you give are [Rgeo, Zgeo, a, kappa, delta], Rgeo,Zgeo,a are
-%     % mandatory.
-%     %I use the values of the standar shape, to get a similar equil
-% 
-%     equil_eddy=fiesta_equilibrium('Target+eddys', configVV, Irod, jprofile, control,efit_configVV, icoil_eddy, signalsVV, weightsVV) %%EFIT!!!
-%     %It does the case in line 96!! The equil calc is in lin 124
-% 
-%     %Now we have to extract the new currents from the equil, provided that EFIT
-%     %changed some of them to satisfy the conditions requested:
-%     icoil_eddy=get(equil_eddy,'icoil');
-%     current_post_EFIT=get(icoil_eddy,'currents');
-%     coil_currents_VV(iPF1) =current_post_EFIT(iPF1);
-%     coil_currents_VV(iPF2) =current_post_EFIT(iPF2);
-%     coil_currents_VV(iDiv1) =current_post_EFIT(iDiv1);
-%     coil_currents_VV(iDiv2) =current_post_EFIT(iDiv2);
-% %No need of redefine the Sol current of course. Actually, Div 1 and 2 are
-% %not neccessary, since I am not changing them
-% 
-% 
-% %     %%2) NO EFIT
-% %             equil = fiesta_equilibrium( 'STV2C2', config, Irod, jprofile, control, [],icoil );
-% 
-%                 %This is not an option, since it does not
-%                 %convnerge with the values without eddys!!!!!!!!!!
-%                              
-%   %Plot of the equil with the eddys!
-%         %section_figure=section(equil); %THIS IS A PLOT
-%         figure;
-%         plot(equil_eddy)
-%         parametersshow(equil_eddy) %this plots the parameters in the equil
-%         hold on
-%         plot(vessel)
-%         plot(coilset)
-%         title('Target equilibria eddys included')
-% 
-% 
-% %%% Make virtual sensors where we want breakdown  %%%%%%%
-% %This is to null the poloidal field(BP), to increase the connective length, and
-% %allow the plasma breakdown. 
-% 
-% BP_virt_R = linspace(param_equil.r0_geom-a_eff,param_equil.r0_geom+a_eff,10);       %R values, 100 values
-% BP_virt_Z = linspace(ZGeo-a_eff,ZGeo+a_eff,10);                     %Z values, 100 values
-% 
-% [BP_virt_R,BP_virt_Z] = meshgrid(BP_virt_R,BP_virt_Z);
-% BP_virt_R = BP_virt_R(:)';
-% BP_virt_Z = BP_virt_Z(:)';
-% 
-% BP_virt_theta = zeros(1,length(BP_virt_R));
-% nSensors = length(BP_virt_theta); %100
-% 
-% BP_virt_names = {};
-% for iSensor=1:nSensors
-%     BP_virt_names{iSensor} = ['Radial Bp Virtual Sensor #' num2str(iSensor) ];
-% end
-% 
-% BP_virt_R = [BP_virt_R  BP_virt_R];
-% BP_virt_Z = [BP_virt_Z  BP_virt_Z];         %Both size 1*200. It is replicated, so element 101=element 1 
-% 
-% BP_virt_theta = [BP_virt_theta  BP_virt_theta+pi/2];    %size 1*200. The first 100 have 0, and the second has pi/2 
-% 
-% for iSensor=nSensors+1:2*nSensors
-%     BP_virt_names{iSensor} = ['Vertical Bp Virtual Sensor #' num2str(iSensor) ];
-% end
-% 
-% sensor_btheta = fiesta_sensor_btheta( 'sensor', BP_virt_R, BP_virt_Z,BP_virt_theta, BP_virt_names );
-% 
-% %(r,z) of the sensors
-% r_sensors=get(sensor_btheta,'r'); %size 1*200
-% z_sensors=get(sensor_btheta,'z'); %size 1*200
-% [R_sensors,Z_sensors]=meshgrid(r_sensors,z_sensors); %size 200*200
-% 
-% %Plot of the sensors
-%     figure; hold on; axis equal;
-%     plot(coilset);
-%     contour( get(equil_eddy,'Psi'),60,'Color','Black', 'LineWidth',0.5 );
-%     contour( get(equil_eddy,'Psi'),get(equil_eddy,'Psi_boundary')*[1 1],'Color','Black', 'LineWidth',1.5 );
-%     plot(vessel);
-%     fileName = 'ST_target_equilibrium';
-%     legend(gca,'hide');
-%     plot(sensor_btheta);
-%     %set(gca,'XLim',[0 1]);
-%     %set(gca,'YLim',[-1.5 1.5]);
-%     xlabel(gca,'R (m)');
-%     ylabel(gca,'Z (m)');
-%     title('Sensors to null Bpol with eddys');
-%     % save_to_pdf( gcf, fileName );
-%     %%%OPtionf for tfg
-%     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-%     axis([0,1.1,-1.1,1.1]) 
+    [efit_configVV, signalsVV, weightsVV, indexVV]=efit_shape_controller(configVV, {'PF1','PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2])
+    % The numbers you give are [Rgeo, Zgeo, a, kappa, delta], Rgeo,Zgeo,a are
+    % mandatory.
+    %I use the values of the standar shape, to get a similar equil
+
+    equil_eddy=fiesta_equilibrium('Target+eddys', configVV, Irod, jprofile, control,efit_configVV, icoil_eddy, signalsVV, weightsVV) %%EFIT!!!
+    %It does the case in line 96!! The equil calc is in lin 124
+
+    %Now we have to extract the new currents from the equil, provided that EFIT
+    %changed some of them to satisfy the conditions requested:
+    icoil_eddy=get(equil_eddy,'icoil');
+    current_post_EFIT=get(icoil_eddy,'currents');
+    coil_currents_eddys(iPF1) =current_post_EFIT(iPF1);
+    coil_currents_eddys(iPF2) =current_post_EFIT(iPF2);
+    coil_currents_eddys(iDiv1) =current_post_EFIT(iDiv1);
+    coil_currents_eddys(iDiv2) =current_post_EFIT(iDiv2);
+%No need of redefine the Sol current of course. Actually, Div 1 and 2 are
+%not neccessary, since I am not changing them
 
 
-%%%HAVE TO CHANGE DIV2, THERE IS NO EQUIL, EVEN WITH EFIT!!
+%     %%2) NO EFIT
+%             equil = fiesta_equilibrium( 'STV2C2', config, Irod, jprofile, control, [],icoil );
+
+                %This is not an option, since it does not
+                %convnerge with the values without eddys!!!!!!!!!!
+                             
+  %Plot of the equil with the eddys!
+        %section_figure=section(equil); %THIS IS A PLOT
+        figure;
+        plot(equil_eddy)
+        parametersshow(equil_eddy) %this plots the parameters in the equil
+        hold on
+        plot(vessel)
+        plot(coilset)
+        title('Target equilibria eddys included')
+
+
+%%% Make virtual sensors where we want breakdown  %%%%%%%
+%This is to null the poloidal field(BP), to increase the connective length, and
+%allow the plasma breakdown. 
+
+BP_virt_R = linspace(param_equil.r0_geom-a_eff,param_equil.r0_geom+a_eff,10);       %R values, 100 values
+BP_virt_Z = linspace(ZGeo-a_eff,ZGeo+a_eff,10);                     %Z values, 100 values
+
+[BP_virt_R,BP_virt_Z] = meshgrid(BP_virt_R,BP_virt_Z);
+BP_virt_R = BP_virt_R(:)';
+BP_virt_Z = BP_virt_Z(:)';
+
+BP_virt_theta = zeros(1,length(BP_virt_R));
+nSensors = length(BP_virt_theta); %100
+
+BP_virt_names = {};
+for iSensor=1:nSensors
+    BP_virt_names{iSensor} = ['Radial Bp Virtual Sensor #' num2str(iSensor) ];
+end
+
+BP_virt_R = [BP_virt_R  BP_virt_R];
+BP_virt_Z = [BP_virt_Z  BP_virt_Z];         %Both size 1*200. It is replicated, so element 101=element 1 
+
+BP_virt_theta = [BP_virt_theta  BP_virt_theta+pi/2];    %size 1*200. The first 100 have 0, and the second has pi/2 
+
+for iSensor=nSensors+1:2*nSensors
+    BP_virt_names{iSensor} = ['Vertical Bp Virtual Sensor #' num2str(iSensor) ];
+end
+
+sensor_btheta = fiesta_sensor_btheta( 'sensor', BP_virt_R, BP_virt_Z,BP_virt_theta, BP_virt_names );
+
+%(r,z) of the sensors
+r_sensors=get(sensor_btheta,'r'); %size 1*200
+z_sensors=get(sensor_btheta,'z'); %size 1*200
+[R_sensors,Z_sensors]=meshgrid(r_sensors,z_sensors); %size 200*200
+
+%Plot of the sensors
+    figure; hold on; axis equal;
+    plot(coilset);
+    contour( get(equil_eddy,'Psi'),60,'Color','Black', 'LineWidth',0.5 );
+    contour( get(equil_eddy,'Psi'),get(equil_eddy,'Psi_boundary')*[1 1],'Color','Black', 'LineWidth',1.5 );
+    plot(vessel);
+    fileName = 'ST_target_equilibrium';
+    legend(gca,'hide');
+    plot(sensor_btheta);
+    %set(gca,'XLim',[0 1]);
+    %set(gca,'YLim',[-1.5 1.5]);
+    xlabel(gca,'R (m)');
+    ylabel(gca,'Z (m)');
+    title('Sensors to null Bpol with eddys');
+    % save_to_pdf( gcf, fileName );
+    %%%OPtionf for tfg
+    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+    axis([0,1.1,-1.1,1.1]) 
 
 %%%%END OF FIESTA EQ WITH EDDYS@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -887,9 +902,16 @@ I_Passive_VV=sum(I_Passive,2);
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % It has the virtual sensors
 
-% rzip_config = fiesta_rzip_configuration( 'RZIP with eddys', config, vessel, {sensor_btheta} );
+%Redefinition of the icoil in the equil with eddys to not have the vessel
+
+% equil_eddy=set(equil_eddy,configVV,'icoil',fiesta_icoil( coilset, coil_currents_eddys(iSol:iDiv2)));
+% 
+% %%%%DO NOT WORK :)
+% 
+% %%%%
+% rzip_configVV = fiesta_rzip_configuration( 'RZIP with eddys', configVV, vessel, {sensor_btheta} );
 %     %have to use the confing without the vessel, which makes sense
-% [A, B, C, D, curlyM, curlyR, gamma, plasma_parameters, index, label_index, state] = response(rzip_config, equil, 'rp',plasma_resistance);
+% [A, B, C, D, curlyM, curlyR, gamma, plasma_parameters, index, label_index, state] = response(rzip_configVV, equil_eddy, 'rp',plasma_resistance);
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 % %%%%%%  Optimised null  %%%%%%%%%%%%
@@ -899,7 +921,7 @@ I_Passive_VV=sum(I_Passive,2);
 % D1 = C_temp(:,2:end);
 
 %%%%%THIS DO NOT WORK, SINCE THE COILSET ALSO CONTAINS THE VESSEL, SO
-%%%%%RESPONDE DO NOT WORK PROPERLY!!!!!!!!!!!!!!!!!!!!!!ç
+%%%%%RESPONDE DO NOT WORK PROPERLY (eig(A) contains NaN or Inf!!!!!!!!!!!!!!!!!!!!!!ç
 
 
 %%
@@ -1324,7 +1346,7 @@ Bpol_sensor=sqrt(Br_sensor.^2+Bz_sensor.^2);
      [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
      xlabel('R (m)')
     ylabel('Z (m)')
-    title('log_{10}(Bpol) mikama')
+    title('log_{10}(Bpol) phase2')
     subplot(1,2,2)
     surf(R_in,Z_in,Bphi_ins_vessel,'EdgeColor','none');
     shading('interp') %this is to make the transition between values continuous,
@@ -1337,7 +1359,7 @@ Bpol_sensor=sqrt(Br_sensor.^2+Bz_sensor.^2);
      [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
     xlabel('R (m)')
     ylabel('Z (m)')
-    title('Bphi mikama')
+    title('Bphi')
 
 %% %%L CALC FORMULAE%%%%%%%%%%%%
 
