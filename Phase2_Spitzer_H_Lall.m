@@ -1,5 +1,5 @@
 %% SEVILLE SPHERICAL TOKAMAK STIMATION
-%V2C2 (the winner). PHASE 2, REDUCED SIZE
+%V2C2 (the winner). PHASE 1, REDUCED SIZE
 %
 %Daniel López Aires // danlopair@alum.us.es
 %Updated to Juanjo Toledo, but modified, and optimized
@@ -43,7 +43,7 @@ tic
     %2) Greenwald fraction
     
                 Gr_fraction=0.7%0.15;                              %This is to scale the Gr_limit==> <=1
-                                %To match Eli's calc
+    
     %3) a_eff                                                        %[m] This defines the size of the field null region.
    
              %a_eff=0.05;                                   % little null region WHAT JJ USED, ST25D BASED
@@ -63,7 +63,7 @@ tic
 FigExt = '.png'; 		%'.png','.eps','.pdf'
 
 %Define project and series names
-ProjectName = 'SMART-P2-9L';			%Define global project name
+ProjectName = 'SMART-P1-9L';			%Define global project name
 %SeriesName = 'VaryTauP';		%Define parameter scan series name
 
 %Create global output folders for saved data and figures
@@ -83,33 +83,26 @@ disp([ ' ' ]);
 
 %%%SEVILLE TOKAMAK(ST)  outer profile%%%%%
 
-%The heigh of vessel, PF,DiV, and Sol (Sol does not matter for the eq calculation
-%of course, since it is turned off, but if will be important in RZIp) 
-%All will be modified with
-mod_Z_pos=-0.2;                                                   %[m], modification for Z>0
-mod_Z_neg=+0.2;                                                 %[m], modification for Z<0
 
+%Define Vessel Wall Thickness
+VWall_Inboard=0.004;	%Inboard Wall Thickness		[m]
+VWall_Outboard=0.008;	%Outboard Wall Thickness	[m]
+VWall_Upper=0.015;		%Top Wall Thickness			[m]
+VWall_Lower=0.015;		%Bottom Wall Thickness		[m]
+Cross_filament=0.00015;           %[m^2] cross section of the VV's filaments
 
 %This are values of the internal vessel. For the outer, the width and heigh
 %must be considered
 
-VesselRMinPoint=0.15;                                               %[m] R min position
+VesselRMinPoint=0.15+VWall_Inboard;;              %[m] R min position
 VesselRMaxPoint=0.8;                                                %[m] R max position
-VesselZMinPoint=-1+mod_Z_neg;                               %[m] Z min position 
-VesselZMaxPoint=1+mod_Z_pos;                                %[m] Z max position 
+VesselZMinPoint=-.8;                               %[m] Z min position 
+VesselZMaxPoint=.8;                                %[m] Z max position 
 
-%R,Z of the filament: for this, whe widht and height have to be considered,
-%since fiesta needs major R,Z to cosntruct the filament, and we hace the
-%inner limits of the vessel:.
-
-ww_R=2.01e-2%1.5e-2;                                                 %[m] filament width
-ww_Z=ww_R;         %ww_R originally                            %[m] filament heigh
-    
-
-ZMinCenter=VesselZMinPoint-ww_Z/2;
-ZMaxCenter=VesselZMaxPoint+ww_Z/2;
-RMinCenter=VesselRMinPoint-ww_R/2;
-RMaxCenter=VesselRMaxPoint+ww_R/2;
+ZMinCenter=VesselZMinPoint-VWall_Lower/2;
+ZMaxCenter=VesselZMaxPoint+VWall_Upper/2; %+
+RMinCenter=VesselRMinPoint-VWall_Inboard/2;
+RMaxCenter=VesselRMaxPoint+VWall_Outboard/2; %+
 
 %They do follow an order!
 point1=[RMaxCenter ZMaxCenter ];                     %Top Right vertice
@@ -130,43 +123,36 @@ iPF1 = 2;
 iPF2 = 3;
 
 % Turns in R and Z of the coils
-nZDiv1=6;
-nRDiv1=4;
-nZDiv2=6;
-nRDiv2=4;
-nZPF1=6;
-nRPF1=4;
-nZPF2=6;
-nRPF2=4;
+nZDiv1=6; nRDiv1=4;
+nZDiv2=6; nRDiv2=4;
+nZPF1=6; nRPF1=4;
+nZPF2=6; nRPF2=4;
 
 nDiv1=nZDiv1*nRDiv1;
 nDiv2=nZDiv2*nRDiv2; 
 nPF1=nZPF1*nRPF1; 
 nPF2=nZPF2*nRPF2;  
 
-%Dimensions of a turn
-width_PF=0.042;                                             % [m] Width of a turn
-height_PF=0.035;                                        %  [m] Height of a turn 
-
+%Dimensions of the PF coils
+width_PF=75*1e-3;  %[m] Width of the PF coil (m)  0.111chonky not updated   (initially 0.042m) (diff 0.069 - to maintain relative edge)
+height_PF=50*1e-3; %[m] Height of a the PF coil (m) 0.074 chonky updated	(Initially 0.035m) (diff 0.039 - to maintain relative edge)
+        %This neglects the separation between conductors in real desgin!!
+        
 %Position of the coils (m)
-R_PF1=0.9+ww_R/2; 
-Z_PF1=0.5+mod_Z_pos+ww_Z/2; 
-R_PF2=0.9+ww_R/2;
-Z_PF2=0.8+mod_Z_pos+ww_Z/2;
-R_Div1=0.15+ww_R/2; %0.25 originally (me) Updated to Scott
-Z_Div1=1.05+mod_Z_pos+ww_Z/2;
-R_Div2=0.45+ww_R/2; %0.55 originally (me) Updated to Scott
-Z_Div2=1.05+mod_Z_pos+ww_Z/2;
+R_PF1=0.9375;  Z_PF1=0.3075;  %[m] Position of PF1 %(0.90,0.30) before 4/6 update
+R_PF2=0.9375;  Z_PF2=0.6075;  %[m] Position of PF2 	%(0.90,0.60) before 4/6 update
+R_Div1=0.2355;  Z_Div1=0.890;  %[m] Position of Div1	%(0.2,0.86+0.039) before 4/6 update
+R_Div2=0.4475;  Z_Div2=0.890;  %[m] Position of Div2  %(0.45,0.86+0.039) before 4/6 update
 
 % Make Solenoid
 nSol=210 %800;                                      % number of turns of the solenoid (Agredano suggested)
 
-%RSol=0.09-ww_R/2;                                  %[m] R position of the solenoid (Inner Solenoid)
- RSol=0.13-ww_R/2;                                    % [m] R position of the solenoid (Outer Solenoid) 
+RSolInner = 0.115; RSolOuter=0.145;   % Inner and Outer solenoid radii    [m]
+ RSol=(RSolInner+RSolOuter)/2; % Central radius of solenoid (0.13) [m]
+ ZMax_Sol=ZMaxCenter+(VWall_Lower/2);                              % [m] Max Z position
+ ZMin_Sol=-ZMax_Sol;                                                  % [m] Min Z position
  
-ZMax_Sol=RMaxCenter+ww_Z/2;                                   % [m] Max Z position
-ZMin_Sol=-ZMax_Sol;                                                  % [m] Min Z position
-
+%turns 
 turns=[];
 turns(iSol) =nSol; %100 in my tfg
 turns(iDiv1) = nDiv1; %8 in my tfg
@@ -193,8 +179,12 @@ Div2 = createVestPFCircuit('Div2', R_Div2, Z_Div2, width_PF,height_PF, turns(iDi
 nfil_ind_coil=turns(iSol); %number of filaments of the inductor coil=number of turns (yes, check it if you want)
 clear('coil_filaments');
 Z_filament = linspace(ZMin_Sol,ZMax_Sol,nfil_ind_coil); 
+
+SolWidth = RSolOuter-RSolInner;                 %[m] - Previously sqrt(70e-6)
+SolHeight = (2*ZMax_Sol)/(length(Z_filament));   %[m] - Previously sqrt(70e-6)
+
 for iFilament=1:nfil_ind_coil
-    coil_filaments(iFilament) = fiesta_filament( RSol,Z_filament(iFilament), sqrt(70e-6),sqrt(70e-6) ); 
+    coil_filaments(iFilament) = fiesta_filament( RSol,Z_filament(iFilament), SolWidth,SolHeight ); 
     %values by default, and R value defined so that the solenoid fit its
     %region
 end
@@ -206,25 +196,72 @@ Sol_circuit = fiesta_circuit( 'Sol', [1], [coil_1] );
 
  %Lets create the lines manually
  
- n_fil_Z=round((ZMaxCenter-ZMinCenter+2*ww_Z)/ww_Z) %8;         %Number of filaments in the Z direction, from Zmin to Zmax
- n_fil_R=round((RMaxCenter-RMinCenter+2*ww_R)/ww_R) %8;        %Number of filaments in the R direction, from Rmin to Rmax
+ %Each wall ahve a certain width
+ 
+ %%%1->2) From Zmax to Zmin, with Rmax= point 1 to 2
+ 
+ ww_R=VWall_Outboard;
+ ww_Z=Cross_filament/ww_R;
+ 
+ n_fil_Z=round((ZMaxCenter-ZMinCenter+2*ww_Z)/ww_Z); %8;         %Number of filaments in the Z direction, from Zmin to Zmax
+ n_fil_R=round((RMaxCenter-RMinCenter+2*ww_R)/ww_R); %8;        %Number of filaments in the R direction, from Rmin to Rmax
 
     %From point 1 to point 2, R=Rmax
     R_lin1_2=RMaxCenter*ones(1,n_fil_Z);
     Z_lin1_2=linspace(ZMaxCenter,ZMinCenter,n_fil_Z);
+
+    %Array with widths
+    wwR_1_2=ww_R*ones(1,n_fil_Z);
+    wwZ_1_2=ww_Z*ones(1,n_fil_Z);
+    
+ %%%2->3) From Rmax to Rmin, with Zmin= point 2 to 3
+ 
+ ww_Z=VWall_Lower;
+ ww_R=Cross_filament/ww_Z;
+ 
+ n_fil_Z=round((ZMaxCenter-ZMinCenter+2*ww_Z)/ww_Z); %8;         %Number of filaments in the Z direction, from Zmin to Zmax
+ n_fil_R=round((RMaxCenter-RMinCenter+2*ww_R)/ww_R); %8;        %Number of filaments in the R direction, from Rmin to Rmax
  
     %From point 2 to point 3, Z=Zmin
     R_lin2_3=linspace(RMaxCenter,RMinCenter,n_fil_R);
-    Z_lin2_3=ZMinCenter*ones(1,n_fil_R);
+    Z_lin2_3=ZMinCenter*ones(1,n_fil_R);    
+
+    %Array with widths
+    wwR_2_3=ww_R*ones(1,n_fil_R);
+    wwZ_2_3=ww_Z*ones(1,n_fil_R);  
+    
+ %%%3->4) From Zmin to Zmax, with Rmin= point 3 to 4
  
+ ww_R=VWall_Inboard;
+ ww_Z=Cross_filament/ww_R;
+ 
+ n_fil_Z=round((ZMaxCenter-ZMinCenter+2*ww_Z)/ww_Z); %8;         %Number of filaments in the Z direction, from Zmin to Zmax
+ n_fil_R=round((RMaxCenter-RMinCenter+2*ww_R)/ww_R); %8;        %Number of filaments in the R direction, from Rmin to Rmax
+    
+    
    %From point 3 to point 4, R=Rmin
      R_lin3_4=RMinCenter*ones(1,n_fil_Z);
      Z_lin3_4=linspace(ZMinCenter,ZMaxCenter,n_fil_Z);
-
+    %Array with widths
+    wwR_3_4=ww_R*ones(1,n_fil_Z);
+    wwZ_3_4=ww_Z*ones(1,n_fil_Z);
+ 
+    %%%4->1) From Rmin to Rmax, with Zmax= point 4 to 1
+ 
+ ww_Z=VWall_Upper;
+ ww_R=Cross_filament/ww_Z;
+ 
+ n_fil_Z=round((ZMaxCenter-ZMinCenter+2*ww_Z)/ww_Z); %8;         %Number of filaments in the Z direction, from Zmin to Zmax
+ n_fil_R=round((RMaxCenter-RMinCenter+2*ww_R)/ww_R); %8;        %Number of filaments in the R direction, from Rmin to Rmax    
+     
     %From point 4 to point 1, Z=Zmax
     R_lin4_1=linspace(RMinCenter,RMaxCenter,n_fil_R);
     Z_lin4_1=ZMaxCenter*ones(1,n_fil_R);
- 
+    
+    %Array with widths
+    wwR_4_1=ww_R*ones(1,n_fil_R);
+    wwZ_4_1=ww_Z*ones(1,n_fil_R); 
+    
 %       figure;
 %       plot(R_lin1_2,Z_lin1_2,'ro');
 %        xlabel('R (m)')
@@ -234,9 +271,12 @@ Sol_circuit = fiesta_circuit( 'Sol', [1], [coil_1] );
 %       plot(R_lin3_4,Z_lin3_4,'go');
 %       plot(R_lin4_1,Z_lin4_1,'k*');
       
-%Accumualtions of R,Z points:
+%Accumualtions of R,Z points and widths:
 xaccum=[R_lin1_2 R_lin2_3 R_lin3_4 R_lin4_1]';
 yaccum=[Z_lin1_2 Z_lin2_3 Z_lin3_4 Z_lin4_1]';
+
+ww_R=[wwR_1_2 wwR_2_3 wwR_3_4 wwR_4_1]';
+ww_Z=[wwZ_1_2 wwZ_2_3 wwZ_3_4 wwZ_4_1]';
 
     %accum_rep=[xaccum; yaccum];    %Check
 
@@ -245,10 +285,13 @@ dup = (abs(diff(xaccum))+abs(diff(yaccum))) > 0;
 xaccum = xaccum(dup);
 yaccum = yaccum(dup);
 
-% figure;
-% plot(xaccum,yaccum,'r.')
-% xlabel('R (m)')
-% ylabel('Z (m)')
+ww_R=ww_R(dup);
+ww_Z=ww_Z(dup);
+
+figure;
+plot(xaccum,yaccum,'r.')
+xlabel('R (m)')
+ylabel('Z (m)')
 
     %accum=[xaccum; yaccum];    %Check
 
@@ -259,7 +302,7 @@ yaccum = yaccum(dup);
     %current
 
 for i=length(xaccum):-1:1
-    vessel_filament(i) = fiesta_filament(xaccum(i),yaccum(i),ww_R,ww_Z,1,0,0); 
+    vessel_filament(i) = fiesta_filament(xaccum(i),yaccum(i),ww_R(i),ww_Z(i),1,0,0); 
         %The fiesta_filament inputs are R,Z,2*r,2*z,1,0,0 R mayor radius, Z heigh, 
         %r minor radius, z minor z (2r width in R axis, 2z in Z axis of the filament)
 end
@@ -284,32 +327,28 @@ passive = fiesta_passive('STVesselPas',vessel_filament,'g');
 
 vessel = fiesta_vessel( 'STVessel',passive);
 
+%%%%%%%%%%%%%%%%%%%%COILSET%%%%%%%%%%%%%%
+
+coilset = fiesta_coilset('STcoilset',[Sol_circuit,PF1,PF2,Div1,Div2],false,xaccum',yaccum');
+
+
 %Plot of the cross section
     figure;
-    plot(PF1);
-    hold on;
-    plot(PF2);
-    plot(Div1);
-    plot(Div2);
-    plot(Sol_circuit);
-    plot(vessel);
-    axis equal;
+    set(gca, 'DataAspectRatio', [1,1,1], 'NextPlot', 'add')
+    c=plot(coilset);
+    set(c, 'EdgeColor', 'k')
+    hold on
+    c=plot(vessel);
+    set(c, 'EdgeColor', 'k')    
     xlabel('R (m)')
     ylabel('Z (m)')
     title('Cross-section for the reduced size')
     %%%OPtionf for tfg
-    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-    axis([0,1.1,-1.1,1.1]) 
+    %set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+    %axis([0,1.1,-1.1,1.1]) 
     %print -depsc2 NOMBREPLOT.eps
     Filename = '_CrossSection';
     saveas(gcf, strcat(ProjectName,Filename,FigExt));
-
-    
-%%%%Borders
-
-%%%%%%%%%%%%%%%%%%%%COILSET%%%%%%%%%%%%%%
-
-coilset = fiesta_coilset('STcoilset',[Sol_circuit,PF1,PF2,Div1,Div2],false,xaccum',yaccum');
 
 % @@@@@@@END CREATION OF THE TOKAMAK@@@@@@@@@@@@@@@
 
@@ -324,16 +363,16 @@ coilset = fiesta_coilset('STcoilset',[Sol_circuit,PF1,PF2,Div1,Div2],false,xaccu
         %touches the outer (R max) wall
     
 %%%PF coil currents (At Equilibrium, time(5,6))                                                   [A]
-I_PF1_Equil=-1.5e3;					%First guess, efit will found it. 
-I_PF2_Equil=-.5e3;					%First guess, efit will found it. 
+I_PF1_Equil=-.8e3;	%-.9 good	%-1.5e3			%First guess, efit will found it. 
+I_PF2_Equil=-1e3;	%-1e3 good	%-.5e4			%First guess, efit will found it. 
                                                %These first guesses have to
                                                %be accurate!!!! It affects
                                                %the results!!!!!!!!!
 %I_Div1_Equil=NaN;					Div1 in series with Sol!
-I_Div2_Equil=+3.3e3;			%4e3 		
+I_Div2_Equil=+3.3e3;	%3.2e3 good %3.3e3		%4e3 		
 
 %%%Sol current
- I_Sol_max =3.5e3%2.5e3                %[A] Max solenoid current, to achieve the desire Ip in RZIp.
+ I_Sol_max =2.7e3%2.5e3                %[A] Max solenoid current, to achieve the desire Ip in RZIp.
 ISol_equil=-I_Sol_max;%.05e3;                            % [A] the current of the Sol in the target eq calc
 %If>0, Sol will attract the plasma, no lower PF and DIv are
 %needed.
@@ -342,7 +381,7 @@ ISol_equil=-I_Sol_max;%.05e3;                            % [A] the current of th
 
 %%%Time intervals
 nTime = 7;      	% Coil Waveform Timesteps	[-]
-discharge_time=20;                                                          %[ms], time duration of the flat-top 
+discharge_time=100;                                                          %[ms], time duration of the flat-top 
 T_ramp_Sol=25;       %Seta as 25ms to match JJ               %[ms], min time to increase or decrease the Sol
 
 t_add=2*T_ramp_Sol; %2 with short breakdown               %time for the aditional point>T_ramp_Sol
@@ -364,7 +403,7 @@ time = [-4*T_ramp_Sol -2*T_ramp_Sol 0 T_ramp_Sol t_add ...
 %Construct Sol, PF/Div coil current waveforms vertices
 											  %!Breakdown!					%!Efit Icoil!
         %Time   	     [1,    2,              3,           4,        5,                  6,               7];
-ISol_Waveform =  [0,  I_Sol_max, I_Sol_max, 0, -I_Sol_max, -I_Sol_max*0.75,   0];
+ISol_Waveform =  [0,  I_Sol_max, I_Sol_max, 0, -I_Sol_max, -I_Sol_max*1,   0];
 IPF1_Waveform =  [0,  NaN,        NaN,        NaN,           I_PF1_Equil,   I_PF1_Equil,   0];
 IPF2_Waveform =  [0,  NaN,        NaN,        NaN,           I_PF2_Equil,   I_PF2_Equil,   0];
 %IDiv1_Waveform = [0,  NaN,        NaN,        NaN,           I_Div1_Equil,  I_Div1_Equil, 0];
@@ -373,6 +412,19 @@ IDiv2_Waveform = [0,  NaN,        NaN,        NaN,           I_Div2_Equil,  I_Di
 %%%%%
 CoilWaveforms = [ISol_Waveform; IPF1_Waveform; IPF2_Waveform; IDiv1_Waveform; IDiv2_Waveform]
 
+
+%Loop voltage calc
+
+slope= (ISol_Waveform(5)-ISol_Waveform(3))/(time(5)-time(3));          %[A/t] slope of the ramp down of the Sol
+V_loop=mu0*turns(iSol)/(ZMax_Sol-ZMin_Sol)*pi*RSol^2*slope     %[V] 1 loop voltage induced by Sol only
+
+%VEST value: Vloop about 3V     GlobusM: about 2V
+
+%Vloop=0.24V for 0.25s T ramp Sol.  Too low
+%Vloop=0.6V for 0.10s T ramp Sol. Too low still 
+%Vloop=1.2V for 0.05(5ms) T ramp Sol, a bit low yet, but time is too low
+
+E=V_loop/(2*pi*0.45)            %[V/m]
 
 %%  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -384,7 +436,7 @@ CoilWaveforms = [ISol_Waveform; IPF1_Waveform; IPF2_Waveform; IDiv1_Waveform; ID
 %Modifying the grid will get different things
 
 R_simulation_limits = [0.03 1];                                                    %R limits of the grid(has to contain vessel)
-Z_simulation_limits = [-1.3 1.3]+[mod_Z_neg mod_Z_pos];         %Z limits of the grid(has to contain vessel)
+Z_simulation_limits = [-1.1 1.1];         %Z limits of the grid(has to contain vessel)
 Grid_size_R = 200;                                                                       %Grid points in R, ST25D based
 Grid_size_Z = 251;                                                                       %Grid points in R, ST25D based
 Grid = fiesta_grid( R_simulation_limits(1), R_simulation_limits(2),...
@@ -406,7 +458,7 @@ ZGrid=get(Grid,'Z'); %1*50200, 50200=251*250
 
 Te=250;                                     %[eV] electron temperature. Calcualted by Eli with my tfg equilibria
 Ti=Te*0.1;                                  %[eV] ion temperature
-Ip=100e3;                                    %[A] plasma current PHASE 1$%&/
+Ip=100e3;                                    %[A] plasma current
 RGeo=0.45;                                %[m] This is Rmajor in the excel. From the eq plot!
 Rmax=0.7 ;                                 %[m] The max value of R (separatrix), for Z=0. From the eq plot!
 a=Rmax-RGeo;                            %[m] minor radius
@@ -465,7 +517,7 @@ icoil_equil.Div2=CoilWaveforms(5,6);	%Div2 Equilibrium Current at time(5,6)
     %Discovered by Juanjo Toledo Garcia
     
     %[efit_config, signals, weights, index]=fiesta_efit_configuration(config, {'PF1','PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2])
-    [efit_config, signals, weights, index]=efit_shape_controller(config, {'PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2]);
+    [efit_config, signals, weights, index]=efit_shape_controller(config, {'PF1','PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2]);
     
     % The numbers you give are [Rgeo, Zgeo, a, kappa, delta], Rgeo,Zgeo,a are
     % mandatory.
@@ -474,6 +526,8 @@ icoil_equil.Div2=CoilWaveforms(5,6);	%Div2 Equilibrium Current at time(5,6)
     equil=fiesta_equilibrium('ST', config, Irod, jprofile, control,efit_config, icoil_equil, signals, weights) %%EFIT!!!
     %It does the case in line 96!! The equil calc is in lin 124
 
+    close all %to close iterate solver pltos if converge
+    
     %Now we have to extract the new currents from the equil, provided that EFIT
     %changed some of them to satisfy the conditions requested:
     icoil_equil=get(equil,'icoil');                         %redefine icoil to save the new current values
@@ -485,23 +539,23 @@ icoil_equil.Div2=CoilWaveforms(5,6);	%Div2 Equilibrium Current at time(5,6)
 
 %%%%%%  Fiesta Plot  %%%%%%%%%%%%%%%%%
 
-    figure; hold on; axis equal;
-    plot(coilset);
-    contour( get(equil,'Psi'),60,'Color','Black', 'LineWidth',0.5 );
-    contour( get(equil,'Psi'),get(equil,'Psi_boundary')*[1 1],'Color','Black', 'LineWidth',1.5 );
-    plot(vessel);
-    fileName = 'ST_target_equilibrium';
-    legend(gca,'hide');
-    %set(gca,'XLim',[0 1]);
-    %set(gca,'YLim',[-1.5 1.5]);
-    xlabel(gca,'R (m)');
-    ylabel(gca,'Z (m)');
-    title('Target equilibria phase 1');
-    % save_to_pdf( gcf, fileName );
-    %%%OPtionf for tfg
-    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-    axis([0,1.1,-1.1,1.1]) 
-    %print -depsc2 NOMBREPLOT.eps
+%     figure; hold on; axis equal;
+%     plot(coilset);
+%     contour( get(equil,'Psi'),60,'Color','Black', 'LineWidth',0.5 );
+%     contour( get(equil,'Psi'),get(equil,'Psi_boundary')*[1 1],'Color','Black', 'LineWidth',1.5 );
+%     plot(vessel);
+%     fileName = 'ST_target_equilibrium';
+%     legend(gca,'hide');
+%     %set(gca,'XLim',[0 1]);
+%     %set(gca,'YLim',[-1.5 1.5]);
+%     xlabel(gca,'R (m)');
+%     ylabel(gca,'Z (m)');
+%     title('Target equilibria phase 1');
+%     % save_to_pdf( gcf, fileName );
+%     %%%OPtionf for tfg
+%     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+%     axis([0,1.1,-1.1,1.1]) 
+%     %print -depsc2 NOMBREPLOT.eps
     
  %Plot from the demo in examples of FIESTA folder
         section_figure=section(equil); %THIS IS A PLOT
@@ -516,10 +570,12 @@ icoil_equil.Div2=CoilWaveforms(5,6);	%Div2 Equilibrium Current at time(5,6)
             %Watch out, R0 in the plot is r0_mag, not r0_geom!!
         %Filename = '_TargetEquilibrium';
         %saveas(gcf, strcat(ProjectName,Filename,FigExt));
+
 %Equilibrium parameters
 
 parameters(equil); %its better in this way, because it shows units and coil currents. If you define a variable, it wont do that
 param_equil=parameters(equil)                             %Will be used in the null sensors
+
 
 %%%%%%  Vessel time constant  %%%%%%%%%%%
 %This has to deal with the change of eddy currents in the vessel (See the
@@ -547,6 +603,7 @@ BP_virt_Z = linspace(ZGeo-a_eff,ZGeo+a_eff,10);             %Z values, 100 value
 % 
 % a_eff=VesselRMaxPoint-VesselRMinPoint
 %%%%%%%%%%5
+
 [BP_virt_R,BP_virt_Z] = meshgrid(BP_virt_R,BP_virt_Z);
 BP_virt_R = BP_virt_R(:)';
 BP_virt_Z = BP_virt_Z(:)';
@@ -583,24 +640,23 @@ global R_sensor Z_sensor
 [R_sensor,Z_sensor]=meshgrid(r_sensors,z_sensors); %size 200*200
 
 %Plot of the sensors
-    figure; hold on; axis equal;
-    plot(coilset);
-    contour( get(equil,'Psi'),60,'Color','Black', 'LineWidth',0.5 );
-    contour( get(equil,'Psi'),get(equil,'Psi_boundary')*[1 1],'Color','Black', 'LineWidth',1.5 );
-    plot(vessel);
-    fileName = 'ST_target_equilibrium';
-    legend(gca,'hide');
-    plot(sensor_btheta);
-    %set(gca,'XLim',[0 1]);
-    %set(gca,'YLim',[-1.5 1.5]);
-    xlabel(gca,'R (m)');
-    ylabel(gca,'Z (m)');
-    title('Target equilibria phase 1 with sensors to null Bpol');
-    % save_to_pdf( gcf, fileName );
-    %%%OPtionf for tfg
-    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-    axis([0,1.1,-1.1,1.1]) 
-    
+%     figure; hold on; axis equal;
+%     plot(coilset);
+%     contour( get(equil,'Psi'),60,'Color','Black', 'LineWidth',0.5 );
+%     contour( get(equil,'Psi'),get(equil,'Psi_boundary')*[1 1],'Color','Black', 'LineWidth',1.5 );
+%     plot(vessel);
+%     fileName = 'ST_target_equilibrium';
+%     legend(gca,'hide');
+%     plot(sensor_btheta);
+%     %set(gca,'XLim',[0 1]);
+%     %set(gca,'YLim',[-1.5 1.5]);
+%     xlabel(gca,'R (m)');
+%     ylabel(gca,'Z (m)');
+%     title('Target equilibria phase 1 with sensors to null Bpol');
+%     % save_to_pdf( gcf, fileName );
+%     %%%OPtionf for tfg
+%     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+%     axis([0,1.1,-1.1,1.1]) 
     
         figure;
         plot(equil)        
@@ -647,6 +703,7 @@ D1_Div2 = C_temp(:,iDiv2);                          %Elements of C_temp(Cn) to D
         I_PF_null=[I_PF_null(1); I_PF_null(2); ISol_Waveform(2); I_PF_null(3)]; %To not have problems
         
         %redefining the coil currents
+
 %%%%%%
 %Update CoilWaveforms array with null-field values
 for i = 1:nPF;
@@ -659,9 +716,6 @@ for i = 1:nPF;
 end
 %Note that since Div1 do not have any NaN (is equal to Sol), will not be
 %changed!
-
-%%%%%%%%%Construction to do the RZIp calculation%%%%%%%%%%
-%The input profile of I_PF currents have to be extended
 
 
 %%%%%%%%%Construction to do the RZIp calculation%%%%%%%%%%
@@ -711,7 +765,6 @@ PF_colors{iDiv1} = 'Magenta';
 PF_colors{iDiv2} = 'Black';
 PF_colors{iPF1} = 'Cyan';
 PF_colors{iPF2} = 'Green';
-
 
 
 %% RZIP AS FIESTA%%%%%%EXPERIMENTAL%%%%
@@ -770,9 +823,9 @@ PF_colors{iPF2} = 'Green';
 %     xlabel('t (s)')
 %     ylabel('R (m)')
 %     title('R (m)')
-% %%%%%%%%%%%%%%
-% 
-% %Try of doing RZIp as fieta here
+% % %%%%%%%%%%%%%%
+% % 
+% % %Try of doing RZIp as fieta here
 % n=get(coilset ,'n');
 % V0=zeros(length(I_PF_input_long),1);
 % 
@@ -814,20 +867,22 @@ PF_colors{iPF2} = 'Green';
 %     title('Ip')
 % 
 %     subplot(4,2,6)
-%     plot(T*1e3,I(:,max(index.vessel)+1)./V(:,max(index.vessel)+3))
+%     plot(T*1e3,I(:,max(index.vessel)+1)./I(:,max(index.vessel)+3))
 %     xlabel('t (ms)')
 %     ylabel('Z (m)')
 %     title('Z (m)')
 % 
 %     subplot(4,2,7)
-%     plot(T*1e3,I(:,max(index.vessel)+2)./V(:,max(index.vessel)+3))
+%     plot(T*1e3,I(:,max(index.vessel)+2)./I(:,max(index.vessel)+3))
 %     xlabel('t (ms)')
 %     ylabel('R (m)')
 %     title('R (m)')
 %     
     %%%%Discussion
     %I_VV seems right
-    %Ip is not, R is negative, so xD
+    %Ip is not, R is negative, so xD. Maybe there is no contrain of R in
+    %the sense that the integration do not stops if the plasma collide
+    %with the VV. 
     
 %% %%%%%RZIp run%%%%%%%%%%%%%
 %It is run 2 times. The coils are current driven always, but the plasma changes form
@@ -915,10 +970,33 @@ I_Passive_VV=sum(I_Passive,2);
             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
             %set(gca,'YLim',[-5 35]);
             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+
+            %Experimental plots to see Vp in detail
+            figure;
+            subplot(1,4,1)
+            plot(time_adaptive*1e3,I_PF_output(:,1)/(1e3))
+            xlabel(' t (ms)')            
+            ylabel(' I CS (kA)')
+            title('I Sol')
+            subplot(1,4,2)
+            plot(time_adaptive*1e3,Ip_output/(1e3))
+            ylabel('I_p (kA)')
+            xlabel(' t (ms)')
+            title('I_p phase 1')
+            subplot(1,4,3)
+            plot(time_adaptive*1e3,Vp_output)
+            xlabel('t (ms)')
+            ylabel('Vp (V)')            
+            title('Vp')
+            subplot(1,4,4)
+            plot(time_adaptive*1e3,V_PF_output(:,1))
+            xlabel('t (ms)')
+            ylabel('V Sol (V)')
+            title('V CS')
 %%% END RZIP@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
-
+    %Inside uFinal(x)
     figure;
     subplot(2,4,1)
     plot(time_adaptive*1e3,uFinal(:,end)/(1e3))  
@@ -957,7 +1035,7 @@ I_Passive_VV=sum(I_Passive,2);
             plot(time_adaptive*1e3,I_PF_output/(1e3))
             title('I_PF (kA)')
             
-            
+            %Weirds elements of uFinal in detail
             figure;
             subplot(2,5,1)
             plot(time_adaptive*1e3,uFinal(:,end-5))  
@@ -1009,13 +1087,7 @@ I_Passive_VV=sum(I_Passive,2);
             xlabel('t(ms)')
            ylabel('¿?')
            title('uFinal(:,end-1)/uFinal(:,end)')    
-           
-           %Checks
-    figure;
-        plot(time_adaptive*1e3,uFinal(:,1)/(1e3))  
-        hold on
-        plot(time_adaptive*1e3,uFinal(:,10)/(1e3))       
-        plot(time_adaptive*1e3,uFinal(:,100)/(1e3))         
+                
     %This mean that the last column of uFinal is Ip, and the previous one
     %are coils current and structure's current, so no RIp,ZIp :((
 %% %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -1066,82 +1138,82 @@ configVV = fiesta_configuration( 'SMART with VV', Grid, coilsetVV);
 %Now lets plot the fields to deduce the direction of the Sol current   
 
   %  % Plot Bz Br Bphi   
-    figure; 
-    subplot(1,6,1)
-    plot(equil_non_optimised);
-    
-    subplot(1,6,2)
-    contour(R_in,Z_in,FieldsBreakNon_VV.Br,1000);
-    shading('interp')
-    hold on;
-    plot(vessel)
-    plot(coilset)
-    c=colorbar; %colorbar
-      ylabel(c, 'Bz(T)');
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-    [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
-    %plot(sensor_btheta)
-    xlabel('R (m)')
-    ylabel('Z (m)')
-    title('Br Break Non optimized (Sol only)')
-    %   % Plot Br   
-    subplot(1,6,3)
-    contour(R_in,Z_in,FieldsBreakNon_VV.Bz,1000);
-    shading('interp')
-    hold on;
-    plot(vessel)
-    plot(coilset)
-    c=colorbar; %colorbar
-      ylabel(c, 'Bz(T)');
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-    [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
-    %plot(sensor_btheta)
-    xlabel('R (m)')
-    ylabel('Z (m)')
-    title('Bz Break Non optimized (Sol only)')
-    
-    subplot(1,6,4)
-    contour(R_in,Z_in,FieldsBreakNon_VV.Bphi,1000);
-    shading('interp')
-    hold on;
-    plot(vessel)
-    plot(coilset)
-    c=colorbar; %colorbar
-      ylabel(c, 'Bz(T)');
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-    [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
-    %plot(sensor_btheta)
-    xlabel('R (m)')
-    ylabel('Z (m)')
-    title('Bphi Break Non optimized (Sol only)')
-    
-    subplot(1,6,5)
-    contour(R_in,Z_in,FieldsBreakNon_VV.Bpol,1000);
-    shading('interp')
-    hold on;
-    plot(vessel)
-    plot(coilset)
-    c=colorbar; %colorbar
-      ylabel(c, 'Bz(T)');
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-    [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
-    %plot(sensor_btheta)
-    xlabel('R (m)')
-    ylabel('Z (m)')
-    title('Bpol Break Non optimized (Sol only)')
-
-    subplot(1,6,6)
-    quiver(R_in,Z_in,FieldsBreakNon_VV.Br,FieldsBreakNon_VV.Bz,'AutoScale','on','AutoScaleFactor', 10)
-    hold on;
-    plot(vessel)
-    plot(coilset)
-    xlabel('R (m)')
-    ylabel('Z (m)')
-    title('Quiver plot Bpol Break Non optimized (Sol only)')
+%     figure; 
+%     subplot(1,6,1)
+%     plot(equil_non_optimised);
+%     
+%     subplot(1,6,2)
+%     contour(R_in,Z_in,FieldsBreakNon_VV.Br,1000);
+%     shading('interp')
+%     hold on;
+%     plot(vessel)
+%     plot(coilset)
+%     c=colorbar; %colorbar
+%       ylabel(c, 'Bz(T)');
+%     view(2) %2D view
+%     plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+%     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
+%     %plot(sensor_btheta)
+%     xlabel('R (m)')
+%     ylabel('Z (m)')
+%     title('Br Break Non optimized (Sol only)')
+%     %   % Plot Br   
+%     subplot(1,6,3)
+%     contour(R_in,Z_in,FieldsBreakNon_VV.Bz,1000);
+%     shading('interp')
+%     hold on;
+%     plot(vessel)
+%     plot(coilset)
+%     c=colorbar; %colorbar
+%       ylabel(c, 'Bz(T)');
+%     view(2) %2D view
+%     plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+%     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
+%     %plot(sensor_btheta)
+%     xlabel('R (m)')
+%     ylabel('Z (m)')
+%     title('Bz Break Non optimized (Sol only)')
+%     
+%     subplot(1,6,4)
+%     contour(R_in,Z_in,FieldsBreakNon_VV.Bphi,1000);
+%     shading('interp')
+%     hold on;
+%     plot(vessel)
+%     plot(coilset)
+%     c=colorbar; %colorbar
+%       ylabel(c, 'Bz(T)');
+%     view(2) %2D view
+%     plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+%     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
+%     %plot(sensor_btheta)
+%     xlabel('R (m)')
+%     ylabel('Z (m)')
+%     title('Bphi Break Non optimized (Sol only)')
+%     
+%     subplot(1,6,5)
+%     contour(R_in,Z_in,FieldsBreakNon_VV.Bpol,1000);
+%     shading('interp')
+%     hold on;
+%     plot(vessel)
+%     plot(coilset)
+%     c=colorbar; %colorbar
+%       ylabel(c, 'Bz(T)');
+%     view(2) %2D view
+%     plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+%     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
+%     %plot(sensor_btheta)
+%     xlabel('R (m)')
+%     ylabel('Z (m)')
+%     title('Bpol Break Non optimized (Sol only)')
+% 
+%     subplot(1,6,6)
+%     quiver(R_in,Z_in,FieldsBreakNon_VV.Br,FieldsBreakNon_VV.Bz,'AutoScale','on','AutoScaleFactor', 10)
+%     hold on;
+%     plot(vessel)
+%     plot(coilset)
+%     xlabel('R (m)')
+%     ylabel('Z (m)')
+%     title('Quiver plot Bpol Break Non optimized (Sol only)')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -1184,18 +1256,18 @@ for loop=1:length(time_loop)
     icoilVV_break = fiesta_icoil( coilsetVV, coil_currents_break );
     equil_break = fiesta_equilibrium( 'optimised null (eddys in)', configVV, Irod, icoilVV_break );
 
-    %Plot
-    figure;
-    plot(equil_break);
-    hold on;
-    plot(coilset)
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-    [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-        xlabel('R (m)')
-    fileName = '\psi contour optimised_null';
-    legend(gca,'hide');
-    title('\psi contours at t=0ms phase 1')
-    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+%     %Plot
+%     figure;
+%     plot(equil_break);
+%     hold on;
+%     plot(coilset)
+%     plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+%     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+%         xlabel('R (m)')
+%     fileName = '\psi contour optimised_null';
+%     legend(gca,'hide');
+%     title('\psi contours at t=0ms phase 1')
+%     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
  
 %Manual plot
 psi_null=get(equil_break,'Psi_vac'); %fiesta field
@@ -1244,38 +1316,22 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
      ylabel('Z (m)')
      title(sprintf('log10(psi)  at t=%d ms (iter %d/%d) 100c',time_loop(loop)*1e3,loop,length(time_loop)))
           
-    %Extraction of the fields!
-    [FieldsBreak_grid, FieldsBreak_VV FieldsBreak_interpn]=fields(equil_break)
-    
-    %Check plot!!!!
-    figure;
-        contourf(R_in,Z_in,log10(FieldsBreak_VV.Bpol));
-        shading('interp') %this is to make the transition between values continuous,
-        %instedad of discontinuously between pixels
-        colormap(Gamma_II)
-        hold on;
-        plot(vessel)
-        colorbar %colorbar
-        view(2) %2D view
-        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-        [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        title(sprintf('log10(B_pol) FUNCTION at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
+ %Extraction of the fields (Earth inside)!
+ [FieldsBreak, FieldsBreakNoEarth]=fields(equil_break);
     
     %Plots!
     % % %%Quiver plot
- scale_factor=1; %graphic needs to be scaled
-figure; 
-%subplot(1,3,1)
-quiver(R_in,Z_in,FieldsBreak_VV.Br/scale_factor, FieldsBreak_VV.Bz/scale_factor,'color',[1 0 0],'AutoScale','on','AutoScaleFactor', 10)
-hold on;
-plot(vessel)
-   view(2) %2D view
-      plot(sensor_btheta)
-xlabel('R (m)')
-ylabel('Z (m)')
-title('\vec{B} inside vessel')
+%  scale_factor=1; %graphic needs to be scaled
+% figure; 
+% %subplot(1,3,1)
+% quiver(R_in,Z_in,Br_ins_vessel/scale_factor, Bz_ins_vessel/scale_factor,'color',[1 0 0],'AutoScale','on','AutoScaleFactor', 10)
+% hold on;
+% plot(vessel)
+%    view(2) %2D view
+%       plot(sensor_btheta)
+% xlabel('R (m)')
+% ylabel('Z (m)')
+% title('\vec{B} inside vessel')
 % subplot(1,3,2)
 % quiver(R_in,Z_in,BrEarthVV/scale_factor, BzEarthVV/scale_factor,'color',[1 0 0],'AutoScale','off')
 % hold on;
@@ -1378,7 +1434,7 @@ title('\vec{B} inside vessel')
 %         
         %Bphi structure
         figure;
-        contourf(R_in,Z_in,log10(FieldsBreak_VV.Bphi));
+        contourf(R_in,Z_in,log10(FieldsBreak.VV.Bphi));
         shading('interp') %this is to make the transition between values continuous,
         %instedad of discontinuously between pixels  
         colormap(Gamma_II)
@@ -1396,7 +1452,7 @@ title('\vec{B} inside vessel')
          figure; 
         %contourf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none');
         %surf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none');
-        contourf(R_in,Z_in,log10(FieldsBreak_VV.Bpol));
+        contour(R_in,Z_in,log10(FieldsBreak.VV.Bpol),1000);
         shading('interp') %this is to make the transition between values continuous,
         %instedad of discontinuously between pixels
         colormap(Gamma_II)
@@ -1474,8 +1530,8 @@ title('\vec{B} inside vessel')
     %used in the field line integrator.
 
     %Minimun with veesel interp 
-    Bpolmin=min(min(FieldsBreak_VV.Bpol));                                         %minimun of poloidal field
-    [Bpolmin_index_row Bpolmin_index_column]=find(FieldsBreak_VV.Bpol==Bpolmin);     %indexes  
+    Bpolmin=min(min(FieldsBreak.sensor.Bpol));                                         %minimun of poloidal field
+    [Bpolmin_index_row Bpolmin_index_column]=find(FieldsBreak.sensor.Bpol==Bpolmin);     %indexes  
 
         %%%%%THIS IS TO COMPARE
     %     %Minimun with sensors interp
@@ -1486,7 +1542,7 @@ title('\vec{B} inside vessel')
 
         
     %And the toroidal field at the center of the null region is:
-    Bphi_centerNull=FieldsBreak_interpn.Bphi((min(r_sensors)+max(r_sensors))/2,...
+    Bphi_centerNull=FieldsBreak.interpn.Bphi((min(r_sensors)+max(r_sensors))/2,...
     (min(z_sensors)+max(z_sensors))/2);
 
 %     %The connective length without averaging is
@@ -1498,10 +1554,11 @@ title('\vec{B} inside vessel')
     %averaged. To do this, if I use the sensor field, it will be much much more
     %easier, so I will do it.
 
-    Bpolmin_av=mean(mean(FieldsBreak_VV.Bpol));                %to compute the mean inside the sensor region
+    Bpolmin_av=mean(mean(FieldsBreak.sensor.Bpol));              %to compute the mean inside the sensor region
     L_aver(loop)=0.25*a_eff*Bphi_centerNull/Bpolmin_av                %[m] L with the average pol field
 
-
+    %REMEMBER THAT THIS IS COMPUTED INSIDE NULL REGION, WHILE THE LOWER
+    %BPOL IS NOT IN THAT REGION DUE TO EDDYS (AND EARTH)
 
     %%L calc by field line integration%%%%%%%
 
@@ -1521,11 +1578,11 @@ title('\vec{B} inside vessel')
     L_max=3000;                                                 %max value for the integration; when L achieves
                                                             %this value, the integration stops. ST have around 50m.
 
-    odefun= @(phi, rzLU) Field_LineIntegrator(phi,rzLU,FieldsBreak_interpn.Br,...
-        FieldsBreak_interpn.Bz,FieldsBreak_interpn.Bphi);
+    odefun= @(phi, rzLU) Field_LineIntegrator(phi,rzLU,FieldsBreak.interpn.Br,...
+        FieldsBreak.interpn.Bz,FieldsBreak.interpn.Bphi);
     event_colission_wall=@(phi,rzLU)Colission_wall(phi,rzLU,VesselRMaxPoint,...
-        VesselRMinPoint,VesselZMaxPoint,VesselZMinPoint,FieldsBreak_interpn.Br,...
-        FieldsBreak_interpn.Bz,FieldsBreak_interpn.Bphi,L_max); 
+        VesselRMinPoint,VesselZMaxPoint,VesselZMinPoint,FieldsBreak.interpn.Br,...
+        FieldsBreak.interpn.Bz,FieldsBreak.interpn.Bphi,L_max); 
     options = odeset('OutputFcn',@ode_progress_bar,'Events',event_colission_wall,'AbsTol',1e-10,'RelTol',1e-6); 
                                     %I include a fiesta funciton to show the progress of the ode
 
@@ -1554,12 +1611,14 @@ title('\vec{B} inside vessel')
         xlabel('R (m)')
         ylabel('Z (m)')
 
-    %Points inside, without the extremal points. This will be used in the ode45
-    r_inside_VV_noLimits=r_inside_VVL(2:end-1);
-    z_inside_VV_noLimits=z_inside_VVL(2:end-1);
-    
-    %Mesh to future plots
-    [r_insVV_noLimit,z_insVV_noLimit]=meshgrid(r_inside_VV_noLimits,z_inside_VV_noLimits);
+     %Points inside, without the extremal points. This will be used in the ode45
+     r_inside_VV_noLimits=r_inside_VVL %r_inside_VVL(2:end-1);
+     z_inside_VV_noLimits=z_inside_VVL %z_inside_VVL(2:end-1);
+                        %Now it has all the points!!!!
+     
+      %Mesh to future plots
+     [r_insVV_noLimit,z_insVV_noLimit]=meshgrid(r_inside_VV_noLimits,z_inside_VV_noLimits);
+     
     
     r0_z0_L0_U0=[0 0 0 0]; %the third column is always zero, since L starts at 0
 
@@ -1580,7 +1639,7 @@ title('\vec{B} inside vessel')
     r0_z0_L0_U0=r0_z0_L0_U0(2:end,:);
 
     
-    %% %%%%SINGLE FIELD LINE TRACER
+ %%%%%%%%SINGLE FIELD LINE TRACER
     %Single integrator and plotter of lines
 %need to find i for the chosen R,Z value in r0_z0_L0_U0.
         %I= 85 for a line inside, 49 for a max L outside, 152 for the
@@ -1595,19 +1654,6 @@ title('\vec{B} inside vessel')
         RZLU_end(i,2)=rzLU_fieldline(end,2);
         RZLU_end(i,3)=rzLU_fieldline(end,3);                                                     %this contains L
         RZLU_end(i,4)=rzLU_fieldline(end,4);    
-
-
-%To store start points that do not collide: first I get the index of both R
-%and Z, but together, since they do not collide if oth R and Z are greater
-%than the min value, and lower than the greatest value
-    
-        RZ_store_index=RZLU_end(:,1)<VesselRMaxPoint &...
-            RZLU_end(:,1)>VesselRMinPoint & RZLU_end(:,2)<VesselZMaxPoint &...
-            RZLU_end(:,2)>VesselZMinPoint;
-
-        RZ_no_collide=[r0_z0_L0_U0(RZ_store_index,1) r0_z0_L0_U0(RZ_store_index,2)];
-
-        
         
 % %%Plot of one of the line
 % 
@@ -1627,7 +1673,7 @@ title('Field line integration for the calculation of the connective length 3')
 set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
 %legend('Starting point (Point with less Bpol)','Field line',...
 
-%% %%%%%%END One line tracer
+%%%%%%%%END One line tracer%%%%%%%%%%%%%5
     
     
     %So, gotta solve 10^2*10^2=10^4 eq xD. Since I am only interested in L,
@@ -1637,7 +1683,7 @@ set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
         fprintf('Iter %d de %d',i,length(r0_z0_L0_U0))
         [phi_fieldline, rzLU_fieldline]=ode45(odefun,phiSpan,r0_z0_L0_U0(i,:),options);        %ode15s Carlos
     
-        %To save the last values of R,Z,L
+        %To save the last values of R,Z,L, U
         RZLU_end(i,1)=rzLU_fieldline(end,1);
         RZLU_end(i,2)=rzLU_fieldline(end,2);
         RZLU_end(i,3)=rzLU_fieldline(end,3);                                                     %this contains L
@@ -1648,217 +1694,107 @@ set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
 %and Z, but together, since they do not collide if oth R and Z are greater
 %than the min value, and lower than the greatest value
     
-        RZ_store_index=RZLU_end(:,1)<VesselRMaxPoint &...
+        RZ_store_index=RZLU_end(:,1)<VesselRMaxPoint & ...
             RZLU_end(:,1)>VesselRMinPoint & RZLU_end(:,2)<VesselZMaxPoint &...
             RZLU_end(:,2)>VesselZMinPoint;
-
-        RZ_no_collide=[r0_z0_L0_U0(RZ_store_index,1) r0_z0_L0_U0(RZ_store_index,2)];
-    
-    
-        %Plot    
-
-        %85 for a line inside, 49 for a max L outside
-        
-% %%Plot of one of the line
-% 
-figure;
-plot3(r0_z0_L0_U0(49,1),0,r0_z0_L0_U0(49,2),'k*','LineWidth',3)
-hold on;
-plot3(vessel)
-plot3(coilset)
-plot3(rzLU_fieldline(:,1).*cos(phi_fieldline),rzLU_fieldline(:,1).*sin(phi_fieldline),...
-    rzLU_fieldline(:,2),'r','LineWidth',3)
-xlabel('x (m)');ylabel('y (m)');zlabel('z (m)');  
-hold on
-plot3(rzLU_fieldline(length(rzLU_fieldline),1).*cos(phi_fieldline(length(rzLU_fieldline)))...
-    ,rzLU_fieldline(length(rzLU_fieldline),1).*sin(phi_fieldline(length(rzLU_fieldline))),...
-    rzLU_fieldline(length(rzLU_fieldline),2),'g*','LineWidth',3)
-title('Field line integration for the calculation of the connective length 3')
-set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-%legend('Starting point (Point with less Bpol)','Field line',...
-%'End point (wall collision')
-
-   %Plot shading
-        figure; 
-    tri = delaunay(r0_z0_L0_U0(:,1),r0_z0_L0_U0(:,2));
-    plot(r0_z0_L0_U0(:,1),r0_z0_L0_U0(:,2),'.')
-    %
-    % How many triangles are there?
-    [r,c] = size(tri);
-    % Plot it with TRISURF
-    trisurf(tri, r0_z0_L0_U0(:,1), r0_z0_L0_U0(:,2),RZLU_end(:,3),'FaceAlpha',1,'EdgeColor','none');
-    %view(2)
-    c=colorbar;
-    ylabel(c, 'L (m)');
-    hold on
-    shading('interp')                       %this is to make the transition between values continuous,
-                                                        %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    plot3([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-    [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],...
-    ones(1,5)*max(RZLU_end(:,3)),'g.--')
-    plot3(RZ_no_collide(:,1),RZ_no_collide(:,2),...
-        max(RZLU_end(:,3))*ones(length(RZ_no_collide(:,1)),1),...
-        'm*','MarkerSize',7)
-    hh=plot(vessel);
-    set(hh,'HandleVisibility','off');
-     hh=plot(coilset);
-    set(hh,'HandleVisibility','off');   
-    %legend('L','Field null region','Not colliding starting points')  
-    legend('L','Field null region')  
-    view(2) %2D view
-    %caxis([min(RZ_no_collide(:,3)),max(RZ_no_collide(:,3))])
-    xlabel(' R (m)')
-    ylabel('Z (m)')
-    %axis([0,1.03,-1.1,1.1]) 
-    title(sprintf('L depending on the starting point for the integration  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        %Note that I convert 2D plots into 3D to plot it at the plane z=max
-        %value of L, because the L plot is a surf, so it has height. 
-    
-        
-        %Plot contour
+                        
+        RZ_no_collide=[r0_z0_L0_U0(RZ_store_index,1) r0_z0_L0_U0(RZ_store_index,2)];    
+       
+        %WHEN INCLUDING ALL THE POINTS, WEIRD THINGS HAPPENS WITH THE
+        %POINTS AT THE BORDER OF THE GRID, SO THAT THE NON COLLIDE VECTOR
+        %COLLIDE SOME OF THOSE POINTS
+       
+%Plot contour
         L_int=reshape(RZLU_end(:,3),size(r_insVV_noLimit,1),size(r_insVV_noLimit,2));
         
         figure;
-        %contourf(r_insVV_noLimit,z_insVV_noLimit,L_int)
-        surf(r_insVV_noLimit,z_insVV_noLimit,L_int), shading('interp')
+        contourf(r_insVV_noLimit,z_insVV_noLimit,L_int,10)
+        %surf(r_insVV_noLimit,z_insVV_noLimit,L_int,'EdgeColor','none'), shading('interp')
+        hold on
+        plot3([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],...
+            ones(1,5)*max(max(L_int)),'g.--')
+        hh=plot(vessel);
+        set(hh, 'EdgeColor', 'k')
+        set(hh,'HandleVisibility','off');
+        hh=plot(coilset);
+        set(hh, 'EdgeColor', 'k')
+        set(hh,'HandleVisibility','off');
+        colormap(Gamma_II)
+        c=colorbar; %colorbar
+        ylabel(c, 'L(m)');
+        view(2) %2D view
+        xlabel('R (m)')
+        ylabel('Z (m)')
+        legend('L','Field null region')
+        title(sprintf('L  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
+    
+  %Plot contour 'potential'
+      U_int=reshape(RZLU_end(:,4),size(r_insVV_noLimit,1),size(r_insVV_noLimit,2));
+        figure;
+        contourf(r_insVV_noLimit,z_insVV_noLimit,U_int,10)
+        %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
         hold on
         plot(vessel)
         plot(coilset)
         colormap(Gamma_II)
         c=colorbar; %colorbar
-        ylabel(c, 'L(m)');
+        ylabel(c, 'U/Vloop');
         view(2) %2D view
         plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
             [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
         xlabel('R (m)')
         ylabel('Z (m)')
-        title(sprintf('L  at t=%d ms (iter %d/%d) 30c',time_loop(loop)*1e3,loop,length(time_loop)))          
+        title(sprintf('Pseudo potential  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
     
-  %Plot shading 'potential'
-  
-       figure; 
-    tri = delaunay(r0_z0_L0_U0(:,1),r0_z0_L0_U0(:,2));
-    plot(r0_z0_L0_U0(:,1),r0_z0_L0_U0(:,2),'.')
-    %
-    % How many triangles are there?
-    [r,c] = size(tri);
-    % Plot it with TRISURF
-    trisurf(tri, r0_z0_L0_U0(:,1), r0_z0_L0_U0(:,2),RZLU_end(:,4),'FaceAlpha',1,'EdgeColor','none');
-    %view(2)
-    c=colorbar;
-    ylabel(c, 'U/V_{loop}');
-    hold on
-    shading('interp')                       %this is to make the transition between values continuous,
-                                                        %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    plot3([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-    [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],...
-    ones(1,5)*max(RZLU_end(:,4)),'g.--')
-    plot3(RZ_no_collide(:,1),RZ_no_collide(:,2),...
-        max(RZLU_end(:,4))*ones(length(RZ_no_collide(:,1)),1),...
-        'm*','MarkerSize',7)
-    hh=plot(vessel);
-    set(hh,'HandleVisibility','off');
-     hh=plot(coilset);
-    set(hh,'HandleVisibility','off');   
-    %legend('L','Field null region','Not colliding starting points')  
-    legend('U/V_loop','Field null region')  
-    view(2) %2D view
-    xlabel(' R (m)')
-    ylabel('Z (m)')
-    %axis([0,1.03,-1.1,1.1]) 
-    title(sprintf('Pseudo potential (U/V_loop)  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        %Note that I convert 2D plots into 3D to plot it at the plane z=max
-        %value of L, because the L plot is a surf, so it has height. 
-  
-  
-        
 %%%%%%%%%5
 %The event function is at the end!!
 time_Ode=toc;           %time of the ode
         
-    
 end   
 
-
-
-
-%%
-figure;
-subplot(1,2,2)
-plot(time_loop*1e3,L_aver,'r*-','MarkerSize',5)
-xlabel('time (ms)')
-ylabel('L_{emp} (m)')
-title('L (empirical) versus time')
-set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-subplot(1,2,1)
-plot(time_loop*1e3,Ip_loop*1e-3,'b*-','MarkerSize',5)
-xlabel('time (ms)')
-ylabel('I_{p} (kA)')
-title('I_p versus time')
-set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-
-
-time_plot=(0:1:5)*1e-3; %s
-I_plot=interpn(time_adaptive,Ip_output,time_plot);
-
-figure;
-plot(time_plot*1e3,I_plot*1e-3)
-xlabel('time (ms)')
-ylabel('I_{p} (kA)')
-title('I_p versus time')
-set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-
-time_plot=(0:1:20)*1e-3; %s
-I_plot=interpn(time_adaptive,Ip_output,time_plot);
-
-figure;
-plot(time_plot*1e3,I_plot*1e-3)
-xlabel('time (ms)')
-ylabel('I_{p} (kA)')
-title('I_p versus time')
-set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+% %%
+% figure;
+% subplot(1,2,2)
+% plot(time_loop*1e3,L_aver,'r*-','MarkerSize',5)
+% xlabel('time (ms)')
+% ylabel('L_{emp} (m)')
+% title('L (empirical) versus time')
+% set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+% subplot(1,2,1)
+% plot(time_loop*1e3,Ip_loop*1e-3,'b*-','MarkerSize',5)
+% xlabel('time (ms)')
+% ylabel('I_{p} (kA)')
+% title('I_p versus time')
+% set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+% 
+% 
+% time_plot=(0:1:5)*1e-3; %s
+% I_plot=interpn(time_adaptive,Ip_output,time_plot);
+% 
+% figure;
+% plot(time_plot*1e3,I_plot*1e-3)
+% xlabel('time (ms)')
+% ylabel('I_{p} (kA)')
+% title('I_p versus time')
+% set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+% 
+% time_plot=(0:1:20)*1e-3; %s
+% I_plot=interpn(time_adaptive,Ip_output,time_plot);
+% 
+% figure;
+% plot(time_plot*1e3,I_plot*1e-3)
+% xlabel('time (ms)')
+% ylabel('I_{p} (kA)')
+% title('I_p versus time')
+% set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
 
 %%%%%%TEST FIELD LINE METHOD
 
 %Lets plot many things
-    figure; 
-        subplot(3,3,1)
-    contour(R_in,Z_in,log10(FieldsBreak_VV.Bpol),1000);
-    shading('interp') %this is to make the transition between values continuous,
-    %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    hold on;
-    plot(vessel)
-    c=colorbar; %colorbar
-    ylabel(c,'log10(Bpol[T])')
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-    ylabel('Z (m)')
-     title(sprintf('log10(B_pol[T])  at t=%d ms (iter %d/%d) 1000c',time_loop(loop)*1e3,loop,length(time_loop)))
-    
-    subplot(3,3,2)
-    contourf(R_in,Z_in,FieldsBreak_VV.Bphi);
-    shading('interp') %this is to make the transition between values continuous,
-    %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    hold on;
-    plot(vessel)
-    colorbar %colorbar
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-    ylabel('Z (m)')
-     title(sprintf('B_phi  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-
-      subplot(3,3,3)
-    contour(R_in,Z_in,log10(R_in.*sqrt(1+FieldsBreak_VV.Bpol.^2./FieldsBreak_VV.Bphi.^2)),1000);
+   
+	figure;
+    contour(R_in,Z_in,log10(R_in.*sqrt(1+FieldsBreak.VV.Bpol.^2./FieldsBreak.VV.Bphi.^2)),1000);
     shading('interp') %this is to make the transition between values continuous,
     %instedad of discontinuously between pixels
     colormap(Gamma_II)
@@ -1873,89 +1809,12 @@ set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
      title(sprintf('log10(ds/d \varphi [m]))  1000c at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
               
      
-     subplot(3,3,4)
-    contourf(R_in,Z_in,log10(R_in.*FieldsBreak_VV.Bpol./FieldsBreak_VV.Bphi));
-    shading('interp') %this is to make the transition between values continuous,
-    %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    hold on;
-    plot(vessel)
-    colorbar %colorbar
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-    ylabel('Z (m)')
-     title(sprintf('log10(R*B_pol/B_phi)  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-    
-     subplot(3,3,5)
-    contourf(R_in,Z_in,log10(R_in.*(1+FieldsBreak_VV.Bpol./FieldsBreak_VV.Bphi)));
-    shading('interp') %this is to make the transition between values continuous,
-    %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    hold on;
-    plot(vessel)
-    colorbar %colorbar
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-    ylabel('Z (m)')
-     title(sprintf('log10(R*(1+B_pol/B_phi))  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-
-           subplot(3,3,6)
-    contourf(R_in,Z_in,log10(FieldsBreak_VV.Bpol./FieldsBreak_VV.Bphi));
-    shading('interp') %this is to make the transition between values continuous,
-    %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    hold on;
-    plot(vessel)
-    colorbar %colorbar
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-    ylabel('Z (m)')
-     title(sprintf('log10(B_pol/B_phi)  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop))) 
-      subplot(3,3,7)
-    contourf(R_in,Z_in,log10(1+FieldsBreak_VV.Bpol./FieldsBreak_VV.Bphi));
-    shading('interp') %this is to make the transition between values continuous,
-    %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    hold on;
-    plot(vessel)
-    colorbar %colorbar
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-    ylabel('Z (m)')
-     title(sprintf('log10(1+B_pol/B_phi)  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-
-     
      %%%%End test plots field line%%%%%%%
-     
-     
-     
-     %%Plot fields and results%%%%%%%%
-     %  % Plot Bz Br Bphi   
-    figure; 
-    subplot(1,7,1)
-    contour(R_in,Z_in,log10(psi_null_ins_VV),1000)
-    hold on
-    plot(vessel)
-    plot(coilset)
-    colormap(Gamma_II)
-    c=colorbar; %colorbar
-      ylabel(c, 'log10(\psi)');
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-      [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-     ylabel('Z (m)')
-     title(sprintf('Psi  at t=%d ms (iter %d/%d) 1000c',time_loop(loop)*1e3,loop,length(time_loop)))          
-    subplot(1,7,2)
-    contour(R_in,Z_in,FieldsBreak_VV.Bz,1000);
+    
+        
+    figure;
+     subplot(1,3,1)
+    contour(R_in,Z_in,FieldsBreak.VV.Bz,1000);
     shading('interp')
     hold on;
     plot(vessel)
@@ -1970,8 +1829,8 @@ set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
     ylabel('Z (m)')
 title(sprintf('B_z at t=%d ms (iter %d/%d) 1000c',time_loop(loop)*1e3,loop,length(time_loop)))
     %   % Plot Br   
-	subplot(1,7,3)
-    contour(R_in,Z_in,FieldsBreak_VV.Br,2000);
+	subplot(1,3,2)
+    contour(R_in,Z_in,FieldsBreak.VV.Br,2000);
     shading('interp')
     hold on;
     plot(vessel)
@@ -1986,8 +1845,8 @@ title(sprintf('B_z at t=%d ms (iter %d/%d) 1000c',time_loop(loop)*1e3,loop,lengt
     ylabel('Z (m)')
 title(sprintf('B_r  at t=%d ms (iter %d/%d) 1000c',time_loop(loop)*1e3,loop,length(time_loop)))
     
-subplot(1,7,4)
-        contour(R_in,Z_in,FieldsBreak_VV.Bphi,1000);
+subplot(1,3,3)
+        contour(R_in,Z_in,FieldsBreak.VV.Bphi,1000);
     shading('interp') %this is to make the transition between values continuous,
     %instedad of discontinuously between pixels
     colormap(Gamma_II)
@@ -2002,80 +1861,27 @@ subplot(1,7,4)
      xlabel('R (m)')
     ylabel('Z (m)')
      title(sprintf('B_phi at t=%d ms (iter %d/%d) 1000c',time_loop(loop)*1e3,loop,length(time_loop)))
-
-    subplot(1,7,5)
-    %contourf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none');
-    %surf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none');
-    contour(R_in,Z_in,log10(FieldsBreak_VV.Bpol),1000);
-    shading('interp') %this is to make the transition between values continuous,
-    %instedad of discontinuously between pixels
-    colormap(Gamma_II)
+      
+ %%%%%%End plots B and L%%%%%%%%%    
+     
+ %Lloyd criteria plot
+ figure;
+ contour(R_in,Z_in,1./(2*pi*R_in).*FieldsBreak.VV.Bphi./FieldsBreak.VV.Bpol,50,'ShowText','on')
+ %surf(R_in,Z_in,1./(2*pi*R_in).*FieldsBreak.VV.Bphi./FieldsBreak.VV.Bpol), shading('interp')
+ colormap(Gamma_II)
     hold on;
     plot(vessel)
     plot(coilset)
     c=colorbar; %colorbar
-      ylabel(c, 'Bpol(T)');
+      ylabel(c, '(E_{phi}B_{phi}/B_{pol})/V_{loop} (1/m)');
     view(2) %2D view
     plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
      [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
      xlabel('R (m)')
     ylabel('Z (m)')
-     title(sprintf('log10(B_pol)  at t=%d ms (iter %d/%d) 1000c',time_loop(loop)*1e3,loop,length(time_loop)))
-    
-     subplot(1,7,6)
-        contour(R_in,Z_in,log10(R_in.*sqrt(1+FieldsBreak_VV.Bpol.^2./FieldsBreak_VV.Bphi.^2)),1000);
-    %shading('interp') %this is to make the transition between values continuous,
-    %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    hold on;
-    plot(vessel)
-    c=colorbar; %colorbar
-      ylabel(c, 'ds/d \varphi (m)');
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-    ylabel('Z (m)')
-     title(sprintf('log10(ds/dphi))  1000c at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-           
-    subplot(1,7,7)
-    tri = delaunay(r0_z0_L0_U0(:,1),r0_z0_L0_U0(:,2));
-    plot(r0_z0_L0_U0(:,1),r0_z0_L0_U0(:,2),'.')
-    %
-    % How many triangles are there?
-    [r,c] = size(tri);
-    % Plot it with TRISURF
-    trisurf(tri, r0_z0_L0_U0(:,1), r0_z0_L0_U0(:,2),RZLU_end(:,3),'FaceAlpha',1,'EdgeColor','none');
-    %view(2)
-    c=colorbar;
-    ylabel(c, 'L (m)');
-    hold on
-    shading('interp')                       %this is to make the transition between values continuous,
-                                                        %instedad of discontinuously between pixels
-    colormap(Gamma_II)
-    plot3([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-    [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],...
-    ones(1,5)*max(RZLU_end(:,3)),'g.--')
-    plot3(RZ_no_collide(:,1),RZ_no_collide(:,2),...
-        max(RZLU_end(:,3))*ones(length(RZ_no_collide(:,1)),1),...
-        'm*','MarkerSize',7)
-    hh=plot(vessel);
-    set(hh,'HandleVisibility','off');
-     hh=plot(coilset);
-    set(hh,'HandleVisibility','off');   
-    %legend('L','Field null region','Not colliding starting points')  
-    legend('L','Field null region')  
-    view(2) %2D view
-    %caxis([min(RZ_no_collide(:,3)),max(RZ_no_collide(:,3))])
-    xlabel(' R (m)')
-    ylabel('Z (m)')
-    %axis([0,1.03,-1.1,1.1]) 
-    title(sprintf('L at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-        %Note that I convert 2D plots into 3D to plot it at the plane z=max
-        %value of L, because the L plot is a surf, so it has height. 
-    
- %%%%%%End plots B and L%%%%%%%%%    
-     
+     title(sprintf('(E_phiB_phi/B_pol)/V_loop (iter %d/%d)',loop,length(time_loop)))
+     axis([0.1 0.9 0 0.9])       
+        
      %% COMPARISON PLASMA FIELD-plasma as wire
 % 
 %   %1) FIESTA
@@ -2483,74 +2289,73 @@ subplot(1,7,4)
 % %     ylabel('Z (m)')
 % %      title('|B| all (plasma+coils) equil')       
 %      
-%  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
-%         
-%        
+%  %%%%%%%%%%%%%%%END COMPARISON WIRE-FIESTA%%%%%%%%%%%       
+      
 
 %% ADDITIONAL FEATURES (EDDYS, FORCES, INTRODUCING EDDYS ON EQUIL (TRY), ETC
 
 
-%% RE-DOING EQUILIBRIA CALC WITH EDDYS
-
-    %Now that we havr compute the eddys, we could re do all the calc, to
-    %get an equil with those eddys, with the new equil do the RZip again,
-    %and, it the new eddys do not change much, could accept the result.
-    %Yes, this is a iterative process, but with a huge consumption of
-    %computer resources==> :)
-     
-     %coil currents for the new equilibria calc
-     
-    coil_currents_eddys = zeros(1,nPF+get(vessel,'n'));                       %n=308, number of filaments
-    coil_currents_eddys(iSol) =	CoilWaveforms(iSol,5);             %Do not change, in principle
-    coil_currents_eddys(iPF1) =CoilWaveforms(iPF1,5);  
-    coil_currents_eddys(iPF2) =CoilWaveforms(iPF2,5);  
-    coil_currents_eddys(iDiv1) =CoilWaveforms(iDiv1,5);  
-    coil_currents_eddys(iDiv2) =CoilWaveforms(iDiv2,5);            %May need to be changed
-
-    %To select the eddy currents, provided that at the equil time the eddys are amx, can
-    %just look at the max:
-    
-    [max_eddy,index_max_eddy]=max(I_Passive_VV);                %the total eddy, the max value
-    coil_currents_eddys(nPF+1:end)=I_Passive(index_max_eddy,:);       %eddy currents, have to define each filament
-    
-    icoil_eddy = fiesta_icoil( coilsetVV, coil_currents_eddys );
-    
-    %%%1) EFIT
-    [efit_configVV, signalsVV, weightsVV, indexVV]=efit_shape_controller(configVV, {'PF1','PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2])
-    % The numbers you give are [Rgeo, Zgeo, a, kappa, delta], Rgeo,Zgeo,a are
-    % mandatory.
-    %I use the values of the standar shape, to get a similar equil
-
-    equil_eddy=fiesta_equilibrium('Target+eddys', configVV, Irod, jprofile, control,efit_configVV, icoil_eddy, signalsVV, weightsVV) %%EFIT!!!
-    %It does the case in line 96!! The equil calc is in lin 124
-
-    %Now we have to extract the new currents from the equil, provided that EFIT
-    %changed some of them to satisfy the conditions requested:
-    icoil_eddy=get(equil_eddy,'icoil');
-    current_post_EFIT=get(icoil_eddy,'currents');
-    coil_currents_eddys(iPF1) =current_post_EFIT(iPF1);
-    coil_currents_eddys(iPF2) =current_post_EFIT(iPF2);
-    coil_currents_eddys(iDiv1) =current_post_EFIT(iDiv1);
-    coil_currents_eddys(iDiv2) =current_post_EFIT(iDiv2);
-%No need of redefine the Sol current of course. Actually, Div 1 and 2 are
-%not neccessary, since I am not changing them
-
-
-%     %%2) NO EFIT
-%             equil = fiesta_equilibrium( 'STV2C2', config, Irod, jprofile, control, [],icoil );
-
-                %This is not an option, since it does not
-                %convnerge with the values without eddys!!!!!!!!!!
-                             
-  %Plot of the equil with the eddys!
-        %section_figure=section(equil); %THIS IS A PLOT
-        figure;
-        plot(equil_eddy)
-        parametersshow(equil_eddy) %this plots the parameters in the equil
-        hold on
-        plot(vessel)
-        plot(coilset)
-        title('Target equilibria eddys included')
+% %% RE-DOING EQUILIBRIA CALC WITH EDDYS
+% 
+%     %Now that we havr compute the eddys, we could re do all the calc, to
+%     %get an equil with those eddys, with the new equil do the RZip again,
+%     %and, it the new eddys do not change much, could accept the result.
+%     %Yes, this is a iterative process, but with a huge consumption of
+%     %computer resources==> :)
+%      
+%      %coil currents for the new equilibria calc
+%      
+%     coil_currents_eddys = zeros(1,nPF+get(vessel,'n'));                       %n=308, number of filaments
+%     coil_currents_eddys(iSol) =	CoilWaveforms(iSol,5);             %Do not change, in principle
+%     coil_currents_eddys(iPF1) =CoilWaveforms(iPF1,5);  
+%     coil_currents_eddys(iPF2) =CoilWaveforms(iPF2,5);  
+%     coil_currents_eddys(iDiv1) =CoilWaveforms(iDiv1,5);  
+%     coil_currents_eddys(iDiv2) =CoilWaveforms(iDiv2,5);            %May need to be changed
+% 
+%     %To select the eddy currents, provided that at the equil time the eddys are amx, can
+%     %just look at the max:
+%     
+%     [max_eddy,index_max_eddy]=max(I_Passive_VV);                %the total eddy, the max value
+%     coil_currents_eddys(nPF+1:end)=I_Passive(index_max_eddy,:);       %eddy currents, have to define each filament
+%     
+%     icoil_eddy = fiesta_icoil( coilsetVV, coil_currents_eddys );
+%     
+%     %%%1) EFIT
+%     [efit_configVV, signalsVV, weightsVV, indexVV]=efit_shape_controller(configVV, {'PF1','PF2'}, [0.44, 0, 0.44/1.85 1.8 0.2])
+%     % The numbers you give are [Rgeo, Zgeo, a, kappa, delta], Rgeo,Zgeo,a are
+%     % mandatory.
+%     %I use the values of the standar shape, to get a similar equil
+% 
+%     equil_eddy=fiesta_equilibrium('Target+eddys', configVV, Irod, jprofile, control,efit_configVV, icoil_eddy, signalsVV, weightsVV) %%EFIT!!!
+%     %It does the case in line 96!! The equil calc is in lin 124
+% 
+%     %Now we have to extract the new currents from the equil, provided that EFIT
+%     %changed some of them to satisfy the conditions requested:
+%     icoil_eddy=get(equil_eddy,'icoil');
+%     current_post_EFIT=get(icoil_eddy,'currents');
+%     coil_currents_eddys(iPF1) =current_post_EFIT(iPF1);
+%     coil_currents_eddys(iPF2) =current_post_EFIT(iPF2);
+%     coil_currents_eddys(iDiv1) =current_post_EFIT(iDiv1);
+%     coil_currents_eddys(iDiv2) =current_post_EFIT(iDiv2);
+% %No need of redefine the Sol current of course. Actually, Div 1 and 2 are
+% %not neccessary, since I am not changing them
+% 
+% 
+% %     %%2) NO EFIT
+% %             equil = fiesta_equilibrium( 'STV2C2', config, Irod, jprofile, control, [],icoil );
+% 
+%                 %This is not an option, since it does not
+%                 %convnerge with the values without eddys!!!!!!!!!!
+%                              
+%   %Plot of the equil with the eddys!
+%         %section_figure=section(equil); %THIS IS A PLOT
+%         figure;
+%         plot(equil_eddy)
+%         parametersshow(equil_eddy) %this plots the parameters in the equil
+%         hold on
+%         plot(vessel)
+%         plot(coilset)
+%         title('Target equilibria eddys included')
 
 
 %%% Make virtual sensors where we want breakdown  %%%%%%%
@@ -2722,16 +2527,16 @@ print -depsc2 NOMBREPLOT.eps
 
 %% %%%%FORCES UPON A CROSS-SECTION OF THE VESSEL%%%%%%%%%%%
 %For doing that, we firsly obtain the field, from the equilibrium:
-
+clc
 %Extraction of the fields:
-  [Fields_grid, Fields_VV Fields_interpn]=fields(equil);
+  [Fields]=fields(equil);
 
 %The field at the vessel is:
 
-Br_VV=Fields_interpn.Br(Rfil,Zfil);
-Bz_VV=Fields_interpn.Bz(Rfil,Zfil);
-Bphi_VV=Fields_interpn.Bphi(Rfil,Zfil);
-
+Br_VV=Fields.interpn.Br(Rfil,Zfil);
+Bz_VV=Fields.interpn.Bz(Rfil,Zfil);
+Bphi_VV=Fields.interpn.Bphi(Rfil,Zfil);
+        
 B_vessel=[Br_VV' Bphi_VV' Bz_VV']; 
         %size(number of filaments*3), each row is the vector field on one filament
 
@@ -2766,6 +2571,9 @@ stress_Z=(Force_fil(:,3))/(height_PF);
 stress_Z_max=max(abs(stress_Z))
 stress_R_max=max(abs(stress_R))
 
+%An increase of 0.3Pa on R is found when adding B Earth!!
+
+
 %plot
 figure; 
  scale_factor=2*10^5; %graphic needs to be scaled
@@ -2791,37 +2599,37 @@ set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
 C_1=[510 300]; %C_1 constant [ m^-1 Tor^-1] for H and He
 C_2=[1.25e4 3.4e4];  %C_2 constant [V m^-1 Tor^-1]
 Gas_type=["H_2","He"];
- p=linspace(1e-5,1e-2,10000);                           %[Tor]pressure of the prefill gas. size>1000 because if
+ p=linspace(1e-6,1e-3,100000);                           %[Tor]pressure of the prefill gas. size>1000 because if
                                                                             %not, It do not work properly
  Emin= @(L,p,C1,C2) C2*p./log(C1*p*L);
  
  %Plot H
  figure;
-    subplot(1,2,1)
-    loglog(p,Emin(5,p,C_1(1),C_2(1)))
-    hold on
-    %
+    %subplot(1,2,1)
     loglog(p,Emin(10,p,C_1(1),C_2(1)))
-    loglog(p,Emin(70,p,C_1(1),C_2(1)))
-    loglog(p,Emin(90,p,C_1(1),C_2(1)))
-    loglog(p,Emin(50,p,C_1(1),C_2(1)))
+    hold on
+    loglog(p,Emin(40,p,C_1(1),C_2(1)))
+    loglog(p,Emin(400,p,C_1(1),C_2(1)))
+    loglog(p,Emin(1000,p,C_1(1),C_2(1)))
+    loglog(p,abs(E)*ones(size(p)),'k-')
     xlabel('Prefill pressure (Torr)')
     ylabel('E_{min} (V/m)')
-    legend('L=5m','L=10m','L=70m','L=90m','Globus-M, L=50m, V_{loop}=4.5-8V')
+    legend('L=10m','L=40m','L=400m (GlobusM)','L=1000m','Actual E')
     title(sprintf('Paschen curve, Gas=%s',Gas_type(1))); %d for numbers
     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
     %
+    
     subplot(1,2,2)
     loglog(p,Emin(5,p,C_1(2),C_2(2)))
     hold on
     %
     loglog(p,Emin(10,p,C_1(2),C_2(2)))
-    loglog(p,Emin(70,p,C_1(2),C_2(2)))
-    loglog(p,Emin(90,p,C_1(2),C_2(2)))
-    loglog(p,Emin(50,p,C_1(2),C_2(2)))
+    loglog(p,Emin(1000,p,C_1(2),C_2(2)))
+    loglog(p,Emin(40,p,C_1(2),C_2(2)))
+    loglog(p,Emin(400,p,C_1(2),C_2(2)))
     xlabel('Prefill pressure (Torr)')
     ylabel('E_{min} (V/m)')
-    legend('L=5m','L=10m','L=70m','L=90m','Globus-M, L=50m, V_{loop}=4.5-8V')
+    legend('L=5m','L=10m','L=1000m','L=40m','Globus-M, L=400m, V_{loop}=4.5-8V')
     title(sprintf('Paschen curve, Gas=%s',Gas_type(2))); %d for numbers
     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG     
  
@@ -2995,10 +2803,122 @@ I_rad_wall= j_rad_wall*2*pi*0.2 %Pasma current [A], Assuming circular plasma of 
 %%THIS DO NOT WORK!!!!!
 
 
+%% Debug Earths addition
+
+%[Field_NoEarth Field_Earth]=fields(equil_break);
+  [Field_Earth, Field_NoEarth]=fields(equil);
 
 
-
-
+    figure
+    subplot(1,2,1)
+    contour(R_in,Z_in,log10(Field_NoEarth.VV.Bpol),1000);
+    shading('interp') %this is to make the transition between values continuous,
+    %instedad of discontinuously between pixels
+    colormap(Gamma_II)
+    hold on;
+    plot(vessel)
+    plot(coilset)
+    c=colorbar; %colorbar
+      ylabel(c, 'Bpol(T)');
+    view(2) %2D view
+    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+     xlabel('R (m)')
+    ylabel('Z (m)')
+     title('Bpol No Earth')
+    
+    subplot(1,2,2)
+    contour(R_in,Z_in,log10(Field_Earth.VV.Bpol),1000);
+    shading('interp') %this is to make the transition between values continuous,
+    %instedad of discontinuously between pixels
+    colormap(Gamma_II)
+    hold on;
+    plot(vessel)
+    plot(coilset)
+    c=colorbar; %colorbar
+      ylabel(c, 'Bpol(T)');
+    view(2) %2D view
+    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+     xlabel('R (m)')
+    ylabel('Z (m)')
+     title('Bpol Earth')
+     
+     figure
+    subplot(1,2,1)
+    contour(R_in,Z_in,Field_NoEarth.VV.Br,1000);
+    shading('interp') %this is to make the transition between values continuous,
+    %instedad of discontinuously between pixels
+    colormap(Gamma_II)
+    hold on;
+    plot(vessel)
+    plot(coilset)
+    c=colorbar; %colorbar
+      ylabel(c, 'Br(T)');
+    view(2) %2D view
+    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+     xlabel('R (m)')
+    ylabel('Z (m)')
+     title('Br No Earth')
+    
+    subplot(1,2,2)
+    contour(R_in,Z_in,Field_Earth.VV.Br,1000);
+    shading('interp') %this is to make the transition between values continuous,
+    %instedad of discontinuously between pixels
+    colormap(Gamma_II)
+    hold on;
+    plot(vessel)
+    plot(coilset)
+    c=colorbar; %colorbar
+      ylabel(c, 'Br(T)');
+    view(2) %2D view
+    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+     xlabel('R (m)')
+    ylabel('Z (m)')
+     title('Br Earth')
+     
+     figure
+    subplot(1,2,1)
+    contour(R_in,Z_in,Field_NoEarth.VV.Bz,1000);
+    shading('interp') %this is to make the transition between values continuous,
+    %instedad of discontinuously between pixels
+    colormap(Gamma_II)
+    hold on;
+    plot(vessel)
+    plot(coilset)
+    c=colorbar; %colorbar
+      ylabel(c, 'Bz(T)');
+    view(2) %2D view
+    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+     xlabel('R (m)')
+    ylabel('Z (m)')
+     title('Bz No Earth')
+    
+    subplot(1,2,2)
+    contour(R_in,Z_in,Field_Earth.VV.Bz,1000);
+    shading('interp') %this is to make the transition between values continuous,
+    %instedad of discontinuously between pixels
+    colormap(Gamma_II)
+    hold on;
+    plot(vessel)
+    plot(coilset)
+    c=colorbar; %colorbar
+      ylabel(c, 'Bz(T)');
+    view(2) %2D view
+    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+     [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+     xlabel('R (m)')
+    ylabel('Z (m)')
+     title('Bz Earth')
+     
+     [Field_Grid Field_Value] =EarthField(R_in,Z_in)
+     
+     %The sum on Bz seems reasonable, and seeing the plots of B the change
+     %in the min of Bpol can be understood.
+%%
 
 
 
@@ -3080,9 +3000,13 @@ I_rad_wall= j_rad_wall*2*pi*0.2 %Pasma current [A], Assuming circular plasma of 
 %@@@@@@Function for the fields@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-function [Field_grid, Field_VV, Field_interpol, Field_sensor]=fields(equil)
-    %beware of the sensors, where they are not defined, its field must not
+%1)Field of things
+function [Field_Earth Field_NoEarth]=fields(equil)
+%function [Field_grid, Field_VV, Field_interpol, Field_sensor]=fields(equil)
+    %beware of the sensors, where they are not defined (yet), its field must not
     %be called!
+    %Will add the Earths field! Will be useful when the fields are low, for
+    %example at breakdown.
     
     global R_in Z_in R_sensor Z_sensor %to obtain global variables
 
@@ -3107,7 +3031,8 @@ function [Field_grid, Field_VV, Field_interpol, Field_sensor]=fields(equil)
     Bz_data = reshape( Bz_data, length(zGrid), length(rGrid)); %251*200
     Bphi_data = reshape( Bphi_data, length(zGrid), length(rGrid)); %251*200
     Bpol_data=sqrt(Br_data.^2+Bz_data.^2);
-
+   
+    
     %Interpolation vectors
     Br_interp = @(r,z) interpn(zGrid,rGrid,Br_data,z,r,'mikama');
     Bz_interp = @(r,z) interpn(zGrid,rGrid,Bz_data,z,r,'mikama');
@@ -3124,7 +3049,7 @@ function [Field_grid, Field_VV, Field_interpol, Field_sensor]=fields(equil)
     Bz_sens=Bz_interp(R_sensor,Z_sensor);
     Bphi_sens=Bphi_interp(R_sensor,Z_sensor);
     Bpol_sens=sqrt(Br_sens.^2+Bz_sens.^2);
-
+    
     %To store them, will create several structures, one for the data, other
     %for the VV data and other for the sensor data
     
@@ -3145,6 +3070,169 @@ function [Field_grid, Field_VV, Field_interpol, Field_sensor]=fields(equil)
     Field_interpol.Br=Br_interp;
     Field_interpol.Bz=Bz_interp;
     Field_interpol.Bphi=Bphi_interp;
+    
+    %Final structure englobating all
+    Field_NoEarth.grid=Field_grid;
+    Field_NoEarth.VV= Field_VV;
+    Field_NoEarth.sensor= Field_sensor;    
+    Field_NoEarth.interpn=Field_interpol;
+    
+        %%%%%Earths field%%%%%%%%%%%%%
+    
+    %In seville, with coordinates 37º23'N 5°59′00″W (Wikipedia, spanish)=
+    %37+23/60ºN 5+59/60º W=37.3833ºN 5.9833ºW, the components are
+    
+    X_Earth=27316.6e-9;                 %[T] N-S component, >0 for N, <0 for S
+    Y_Earth=-423.4e-9;                      %[T] E-W component, <0 for W, >0 for E
+    Z_Earth=33833.4e-9;                 %[T] vertical component, <0 for U, >0 for D
+    
+    %To create the vectors, I have problems for the r and phi directions, since its
+    %magnitude vary when moving the toroidal angle, because Fiesta considers
+    %axysymmetry, but Earths field is not axysymmetric. What I will do as an
+    %approximation is take the average value of the field over all the phi angles. 
+    %This value, the mean, will be used for the r and phi components. 
+    %THe z components is norproblematic
+    
+        BrEarth=0; %initialization
+        BphiEarth=0; %initialization
+        ang_Earth=linspace(0,2*pi,100);
+        
+        for i=1:length(ang_Earth)
+            %Addition at each step (debug)
+            add_Br(i)=X_Earth*cos(ang_Earth(i))+(-Y_Earth)*sin(ang_Earth(i));       
+            add_Bphi(i)=-X_Earth*sin(ang_Earth(i))+(-Y_Earth)*cos(ang_Earth(i));
+                                                %-Y because Seville is in the West (W)
+            BrEarth=BrEarth+add_Br(i);
+            BphiEarth=BphiEarth+add_Bphi(i);
+            
+        end
+         
+        %The r and phi components are the mean:       
+        BrEarth=BrEarth/length(ang_Earth); %mean
+        BphiEarth=BphiEarth/length(ang_Earth); %mean      
+        
+        %The vertical component is
+        BzEarth=-Z_Earth;
+        BpolEarth=sqrt(BrEarth^2+ BzEarth^2);
+    
+        %Now lets create the a grid with this constant field values;
+       
+        BzEarth=BzEarth*ones(length(zGrid), length(rGrid));        
+        BrEarth= BrEarth*ones(length(zGrid), length(rGrid));
+        BphiEarth=BphiEarth*ones(length(zGrid), length(rGrid));    
+        BpolEarth=sqrt(BrEarth.^2+ BzEarth.^2);
+    
+        
+    %%%%%%%%END EARTHS FIELD%%%%%%%%
+    %Now will create the same as above but with Earths field
+    
+    %Interpolation vectors 
+    Br_interp = @(r,z) interpn(zGrid,rGrid,Br_data+BrEarth,z,r,'mikama');
+    Bz_interp = @(r,z) interpn(zGrid,rGrid,Bz_data+BzEarth,z,r,'mikama');
+    Bphi_interp = @(r,z) interpn(zGrid,rGrid,Bphi_data+BphiEarth,z,r,'mikama');
+    
+    %Finally, the fields inside the vessel are
+    Br_VV=Br_interp(R_in,Z_in);
+    Bz_VV=Bz_interp(R_in,Z_in);
+    Bphi_VV=Bphi_interp(R_in,Z_in);
+    Bpol_VV=sqrt(Br_VV.^2+Bz_VV.^2);
+    
+    %And inside the sensor region:
+    Br_sens=Br_interp(R_sensor,Z_sensor);
+    Bz_sens=Bz_interp(R_sensor,Z_sensor);
+    Bphi_sens=Bphi_interp(R_sensor,Z_sensor);
+    Bpol_sens=sqrt(Br_sens.^2+Bz_sens.^2);
+    
+    %To store them, will create several structures, one for the data, other
+    %for the VV data and other for the sensor data
+    
+    Field_grid.Br=Br_data;
+    Field_grid.Bz=Bz_data;
+    Field_grid.Bphi=Bphi_data;
+    
+    Field_VV.Br=Br_VV;
+    Field_VV.Bz=Bz_VV;
+    Field_VV.Bphi=Bphi_VV;
+    Field_VV.Bpol=Bpol_VV;    
+
+    Field_sensor.Br=Br_sens;
+    Field_sensor.Bz=Bz_sens;
+    Field_sensor.Bphi=Bphi_sens;
+    Field_sensor.Bpol=Bpol_sens;
+    
+    Field_interpol.Br=Br_interp;
+    Field_interpol.Bz=Bz_interp;
+    Field_interpol.Bphi=Bphi_interp;
+    
+        %Final structure englobating all
+    Field_Earth.grid=Field_grid;
+    Field_Earth.VV= Field_VV;
+    Field_Earth.sensor= Field_sensor;    
+    Field_Earth.interpn=Field_interpol;
+    
+    %Yes, everything is all right, you are not rewritting things
+end
+
+%2) Earth Field
+
+    %Not in use, but its helpful to see the Earths field alone!
+
+function [Field_Grid Field_Value] =EarthField(RGrid,ZGrid)
+
+    %In seville, with coordinates 37º23'N 5°59′00″W (Wikipedia, spanish)=
+    %37+23/60ºN 5+59/60º W=37.3833ºN 5.9833ºW, the components are
+    
+    X_Earth=27316.6e-9;                 %[T] N-S component, >0 for N, <0 for S
+    Y_Earth=-423.4e-9;                      %[T] E-W component, <0 for W, >0 for E
+    Z_Earth=33833.4e-9;                 %[T] vertical component, <0 for U, >0 for D
+    
+    %To create the vectors, I have problems for the r and phi directions, since its
+    %magnitude vary when moving the toroidal angle, because Fiesta considers
+    %axysymmetry, but Earths field is not axysymmetric. What I will do as an
+    %approximation is take the average value of the field over all the phi angles. 
+    %This value, the mean, will be used for the r and phi components. 
+    %THe z components is norproblematic
+    
+        BrEarth=0; %initialization
+        BphiEarth=0; %initialization
+        ang_Earth=linspace(0,2*pi,100);
+        
+        for i=1:length(ang_Earth)
+            %Addition at each step (debug)
+            add_Br(i)=X_Earth*cos(ang_Earth(i))+(-Y_Earth)*sin(ang_Earth(i));       
+            add_Bphi(i)=-X_Earth*sin(ang_Earth(i))+(-Y_Earth)*cos(ang_Earth(i));
+                                                %-Y because Seville is in the West (W)
+            BrEarth=BrEarth+add_Br(i);
+            BphiEarth=BphiEarth+add_Bphi(i);
+            
+        end
+         
+        %The r and phi components are the mean:       
+        BrEarth=BrEarth/length(ang_Earth); %mean
+        BphiEarth=BphiEarth/length(ang_Earth); %mean      
+        
+        %The vertical component is
+        BzEarth=-Z_Earth;
+        BpolEarth=sqrt(BrEarth^2+ BzEarth^2);
+    
+        %Now lets create the a grid with this constant field values;
+       
+        BzEarthG=BzEarth*ones(length(ZGrid), length(RGrid));        
+        BrEarthG= BrEarth*ones(length(ZGrid), length(RGrid));
+        BphiEarthG=BphiEarth*ones(length(ZGrid), length(RGrid));    
+        BpolEarthG=sqrt(BrEarthG.^2+ BzEarthG.^2);
+
+    %Store of the values
+    
+    Field_Grid.Br=BrEarthG;
+    Field_Grid.Bz=BzEarthG;
+    Field_Grid.Bphi=BphiEarthG;
+    Field_Grid.Bpol=BpolEarthG;
+
+    Field_Value.Br=BrEarth;                     %single values of the fields
+    Field_Value.Bz=BzEarth;
+    Field_Value.Bphi=BphiEarth;
+    Field_Value.Bpol=BpolEarth;
 end
 
 %%
