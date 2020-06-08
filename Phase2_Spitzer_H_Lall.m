@@ -1569,187 +1569,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         %same. No need for loop, to avoid problems. I'll do it manually xD.
         %However, here I will do the calc inside all the VV
       
-    %i) Integrator with phi
-        %Now that we have the field, we want to comput the field lines, whose eq is
-        %cross(B,dr)=0 ==> Br/dr=Bphi/(r dphi)=Bz/dz =cte=tt
-        %I have to create a function. I dont want the constant tt, and I can remove
-        %it by diving the 3 eq Br=ctt*dr, Bphi=ctt*r*dphi, Bz=ctt*dz between each other
-        %One of the coordinates have to be the independent one, and phi seems the
-        %best option, since is >0 while the rest are ><0, and phi increase (or
-        %decrease) when you follow a field line. (Carlos Soria)
-
-        %Grid
-        %I redefine the grid to compute the connection length, for less computer
-        %demands (time)
-
-        n_pnts_insideL=15 %10%25 for a_eff=0.15;            %100 is the ideal to have good plots of the fields, but the L int failures. 
-
-        r_inside_VVL=linspace(VesselRMinPoint,VesselRMaxPoint,n_pnts_insideL); 
-        z_inside_VVL=linspace(VesselZMinPoint,VesselZMaxPoint,n_pnts_insideL);
-
-        %Plot
-%         [r_ins_VVL,z_ins_VVL]=meshgrid(r_inside_VVL,z_inside_VVL);
-%         figure;
-%         plot(r_ins_VVL,z_ins_VVL,'r.')
-%         hold on
-%         plot(vessel)
-%         xlabel('R (m)')
-%         ylabel('Z (m)')
-
-        %Points inside, without the extremal points. This will be used in the ode45
-        r_inside_VV_noLimits=r_inside_VVL %r_inside_VVL(2:end-1);
-        z_inside_VV_noLimits=z_inside_VVL %z_inside_VVL(2:end-1);
-                        %Now it has all the points!!!!
-     
-        %Mesh to future plots
-        [r_insVV_noLimit,z_insVV_noLimit]=meshgrid(r_inside_VV_noLimits,z_inside_VV_noLimits);
-     
-        r0_z0_L0_U0=[0 0 0 0]; %the third column is always zero, since L starts at 0
-
-        for i=1:length(r_inside_VV_noLimits)
-
-            for j=1:length(z_inside_VV_noLimits)
-        
-                points=[r_inside_VV_noLimits(i) z_inside_VV_noLimits(j)];          
-                r0_z0_L0_U0=[ r0_z0_L0_U0; points 0 0];    %U(0)=0 (arbitrary)    
-            end
     
-        end
-
-        %I have the additional point 0 0 0 form the begining, that i can remove
-        %easily with
-        r0_z0_L0_U0=r0_z0_L0_U0(2:end,:);
-    
-    %%%%%%%
-        
-        phi_values=1000; 
-        n_iter=3000         %1000                                %integer, Number of iterations!!!!
-        phiSpan=linspace(0,2*pi*n_iter,phi_values*n_iter);    %the range of values of phi to do the integration. remember phi is
-                                        %the independent variable. To do more than 1 loop, we multiply
-                                        %by an integer, n_iter
-        L_max=3000;                                                 %max value for the integration; when L achieves
-                                                            %this value, the integration stops. ST have around 50m.
-
-        odefun= @(phi, rzLU) Field_LineIntegrator(phi,rzLU,FieldsBreak.interpn.Br,...
-            FieldsBreak.interpn.Bz,FieldsBreak.interpn.Bphi);
-        event_colission_wall=@(phi,rzLU)Colission_wall(phi,rzLU,VesselRMaxPoint,...
-            VesselRMinPoint,VesselZMaxPoint,VesselZMinPoint,FieldsBreak.interpn.Br,...
-            FieldsBreak.interpn.Bz,FieldsBreak.interpn.Bphi,L_max); 
-        options = odeset('OutputFcn',@ode_progress_bar,'Events',event_colission_wall,'AbsTol',1e-10,'RelTol',1e-6); 
-                                    %I include a fiesta funciton to show the progress of the ode
-
-
-        %%%%%%%%SINGLE FIELD LINE TRACER
-        tic              %to know the time
-        %Single integrator and plotter of lines
-            %need to find i for the chosen R,Z value in r0_z0_L0_U0.
-            %I= 85 for a line inside, 49 for a max L outside, 152 for the
-            %outward arm (Z>0). 135 for the outward Z<0 line. 64 for the upper
-            %arm
-        
-            i=77 %looked in the vector
-            [phi_fieldline, rzLU_fieldline]=ode45(odefun,phiSpan,r0_z0_L0_U0(i,:),options);        %ode15s Carlos
-    
-            %To save the last values of R,Z,L
-            RZLU_end(i,1)=rzLU_fieldline(end,1);
-            RZLU_end(i,2)=rzLU_fieldline(end,2);
-            RZLU_end(i,3)=rzLU_fieldline(end,3);                            %this contains L
-            RZLU_end(i,4)=rzLU_fieldline(end,4);    %this contains U
-        
-        % %%Plot of one of the line
-        % 
-        figure;
-        plot3(r0_z0_L0_U0(i,1),0,r0_z0_L0_U0(i,2),'k*','LineWidth',3)
-        hold on;
-        plot3(vessel)
-        plot3(coilset)
-        plot3(rzLU_fieldline(:,1).*cos(phi_fieldline),rzLU_fieldline(:,1).*sin(phi_fieldline),...
-            rzLU_fieldline(:,2),'r','LineWidth',3)
-        xlabel('x (m)');ylabel('y (m)');zlabel('z (m)');  
-        hold on
-        plot3(rzLU_fieldline(length(rzLU_fieldline),1).*cos(phi_fieldline(length(rzLU_fieldline)))...
-            ,rzLU_fieldline(length(rzLU_fieldline),1).*sin(phi_fieldline(length(rzLU_fieldline))),...
-            rzLU_fieldline(length(rzLU_fieldline),2),'g*','LineWidth',3)
-        title('Field line integration phi (single)')
-        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        %legend('Starting point (Point with less Bpol)','Field line',...
-
-        %%%%%%%%END One line tracer%%%%%%%%%%%%%5
-    
-    
-    %So, gotta solve 10^2*10^2=10^4 eq xD. Since I am only interested in L,
-    %could do a for loop simply saving the L value. Will do that:
-    
-        for i=1:length(r0_z0_L0_U0)
-            fprintf('Iter %d de %d',i,length(r0_z0_L0_U0))
-            [phi_fieldline, rzLU_fieldline]=ode45(odefun,phiSpan,r0_z0_L0_U0(i,:),options);        %ode15s Carlos
-    
-            %To save the last values of R,Z,L, U
-            RZLU_end(i,1)=rzLU_fieldline(end,1);
-            RZLU_end(i,2)=rzLU_fieldline(end,2);
-            RZLU_end(i,3)=rzLU_fieldline(end,3);                    %this contains L
-            RZLU_end(i,4)=rzLU_fieldline(end,4);    
-        end
-       time_int_phi=toc           %time of the ode
-    
-       %To store start points that do not collide: first I get the index of both R
-        %and Z, but together, since they do not collide if oth R and Z are greater
-        %than the min value, and lower than the greatest value
-    
-            RZ_store_index=RZLU_end(:,1)<VesselRMaxPoint & ...
-                RZLU_end(:,1)>VesselRMinPoint & RZLU_end(:,2)<VesselZMaxPoint &...
-                RZLU_end(:,2)>VesselZMinPoint; %100*1
-                        
-            RZ_no_collide=[r0_z0_L0_U0(RZ_store_index,1) r0_z0_L0_U0(RZ_store_index,2)];    
-       
-        %WHEN INCLUDING ALL THE POINTS, WEIRD THINGS HAPPENS WITH THE
-        %POINTS AT THE BORDER OF THE GRID, SO THAT THE NON COLLIDE VECTOR
-        %COLLIDE SOME OF THOSE POINTS
-       
-        %Plot contour
-        L_int=reshape(RZLU_end(:,3),size(r_insVV_noLimit,1),size(r_insVV_noLimit,2));
-        
-        figure;
-        contourf(r_insVV_noLimit,z_insVV_noLimit,L_int,10)
-        %surf(r_insVV_noLimit,z_insVV_noLimit,L_int,'EdgeColor','none'), shading('interp')
-        hold on
-        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'g.--')
-        plot(RZ_no_collide(:,1),RZ_no_collide(:,2),'m*')
-        hh=plot(vessel);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        hh=plot(coilset);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        colormap(Gamma_II)
-        c=colorbar; %colorbar
-        ylabel(c, 'L(m)');
-        view(2) %2D view
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        legend('L','Field null region')
-        title(sprintf('L  at t=%d ms (iter %d/%d) PHI',time_loop(loop)*1e3,loop,length(time_loop)))          
-    
-        %Plot contour 'potential'
-        U_int=reshape(RZLU_end(:,4),size(r_insVV_noLimit,1),size(r_insVV_noLimit,2));
-        figure;
-        contourf(r_insVV_noLimit,z_insVV_noLimit,U_int,10)
-        %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
-        hold on
-        plot(vessel)
-        plot(coilset)
-        colormap(Gamma_II)
-        c=colorbar; %colorbar
-        ylabel(c, 'U/Vloop');
-        view(2) %2D view
-        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        title(sprintf('Pseudo potential  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
-            
-
      %ii) Integrator with Lp
             %thi is another way to integrate!
 
@@ -1791,7 +1611,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
                                     %I include a fiesta funciton to show the progress of the ode
 
 
-        %% %%%%%%SINGLE FIELD LINE TRACER
+        %%%%%%%%SINGLE FIELD LINE TRACER
         tic              %to know the time
         %Single integrator and plotter of lines
             %need to find i for the chosen R,Z value in r0_z0_L0_U0.
@@ -1825,7 +1645,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
         %legend('Starting point (Point with less Bpol)','Field line',...
 
-        %% %%%%%%END One line tracer%%%%%%%%%%%%%5
+        %%%%%%%%END One line tracer%%%%%%%%%%%%%5
     
     %So, gotta solve 10^2*10^2=10^4 eq xD. Since I am only interested in L,
     %could do a for loop simply saving the L value. Will do that:
@@ -2557,39 +2377,11 @@ I_rad_wall= j_rad_wall*2*pi*0.2 %Pasma current [A], Assuming circular plasma of 
 %@@@@@@Functions for the breakdown integration@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    %1) Field line integrator function
-        %this solves the field line eq, using phi as the independent
-        %variable, so the derviatvies are dr/dphi and dz/dphi
-    
-    
-    function [results]=Field_LineIntegrator(phi,rzLU,Br_interpn,Bz_interpn,Bphi_interpn)
-    %rzL=[r z L U]
-   
-    %First, the field needs to be evaluated at the point (r,phi,z):
-    
-    Br_eval=Br_interpn(rzLU(1),rzLU(2));
-    Bphi_eval=Bphi_interpn(rzLU(1),rzLU(2));
-    Bz_eval=Bz_interpn(rzLU(1),rzLU(2));    
-    Bpol_eval=sqrt(Br_eval^2+Bz_eval^2);
-    
-    %With the field, the eq to solve is:
-    
-    dr_dphi=rzLU(1)*Br_eval/Bphi_eval;
-    dz_dphi=rzLU(1)*Bz_eval/Bphi_eval;
-    length=rzLU(1)*sqrt(Bphi_eval^2+Bpol_eval^2)/Bphi_eval;
-    U_Vloop=1/(2*pi*rzLU(1)); %pseudo potential U/V_loop
-    
-    results=zeros(4,1); %column vector to group the results
-    results(1)=dr_dphi;
-    results(2)=dz_dphi;
-    results(3)=length;
-    results(4)=U_Vloop;
-    
-    end
-
+  
      %2) Field line integrator function with Lp
         %this solves the field line eq, using Lp (poloidal length) 
             %as an independent variable
+        %way more faster than with phi (5 min when Lmax=3000m, 15 inside points)
     
     
     function [results]=Field_LineIntegrator_Lp(Lp,rzLphiU,Br_interpn,Bz_interpn,Bphi_interpn)
