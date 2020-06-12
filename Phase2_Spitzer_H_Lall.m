@@ -23,9 +23,9 @@ close all
         %Z_eff=Z_nucleus-Debye shielding. It can be calculated in
         %http://calistry.org/calculate/slaterRuleCalculator , giving:
              Gas_type='H'
-             Z_eff=1                                                                    %H
-             C_1=510                              %[m-1 Torr-1] This is the constant A, I have changed its name
-             C_2=1.25e4                     %[V-1 m-1 Torr-1] This is the constant B, I have changed its name
+             Z_eff=1                                                          %H
+             C_1=510;                              %[m-1 Torr-1] This is the constant A, I have changed its name
+             C_2=1.25e4;                     %[V-1 m-1 Torr-1] This is the constant B, I have changed its name
 
         %ii)He  
 %              Gas_type='He'
@@ -41,7 +41,7 @@ close all
             
     %2) Greenwald fraction
     
-                Gr_fraction=0.7%0.15;                              %This is to scale the Gr_limit==> <=1
+                Gr_fraction=0.7;%0.15;                              %This is to scale the Gr_limit==> <=1
     
     %3) a_eff                                                        %[m] This defines the size of the field null region.
    
@@ -62,12 +62,12 @@ close all
 FigExt = '.png'; 		%'.png','.eps','.pdf'
 
 %Define project and series names
-ProjectName = 'SMART-P1-9L';			%Define global project name
+ProjectName = 'SMART-P2';			%Define global project name
 %SeriesName = 'VaryTauP';		%Define parameter scan series name
 
 %Create global output folders for saved data and figures
 ASCIIDir = 'RawData/'; mkdir(ASCIIDir);
-%FigDir = 'Figures/'; mkdir(FigDir);			%NOT CURRENTLY USED
+FigDir = 'Figures/'; mkdir(FigDir);			%NOT CURRENTLY USED
 
 %Create simulation name based upon relevant run parameters
 SimName = 'DefaultSimName';
@@ -144,7 +144,7 @@ R_Div1=0.2355;  Z_Div1=0.890;  %[m] Position of Div1	%(0.2,0.86+0.039) before 4/
 R_Div2=0.4475;  Z_Div2=0.890;  %[m] Position of Div2  %(0.45,0.86+0.039) before 4/6 update
 
 % Make Solenoid
-nSol=210 %800;                                      % number of turns of the solenoid (Agredano suggested)
+nSol=210; %800;                                      % number of turns of the solenoid (Agredano suggested)
 
 RSolInner = 0.115; RSolOuter=0.145;   % Inner and Outer solenoid radii    [m]
  RSol=(RSolInner+RSolOuter)/2; % Central radius of solenoid (0.13) [m]
@@ -287,10 +287,10 @@ yaccum = yaccum(dup);
 ww_R=ww_R(dup);
 ww_Z=ww_Z(dup);
 
-figure;
-plot(xaccum,yaccum,'r.')
-xlabel('R (m)')
-ylabel('Z (m)')
+% figure;
+% plot(xaccum,yaccum,'r.')
+% xlabel('R (m)')
+% ylabel('Z (m)')
 
     %accum=[xaccum; yaccum];    %Check
 
@@ -341,13 +341,13 @@ coilset = fiesta_coilset('STcoilset',[Sol_circuit,PF1,PF2,Div1,Div2],false,xaccu
     set(c, 'EdgeColor', 'k')    
     xlabel('R (m)')
     ylabel('Z (m)')
-    title('Cross-section for the reduced size')
+    title('Cross-section')
     %%%OPtionf for tfg
-    %set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
     %axis([0,1.1,-1.1,1.1]) 
     %print -depsc2 NOMBREPLOT.eps
-    Filename = '_CrossSection';
-    saveas(gcf, strcat(ProjectName,Filename,FigExt));
+    Filename = 'CrossSection';
+    saveas(gcf, strcat(FigDir,Filename,FigExt));
 
 % @@@@@@@END CREATION OF THE TOKAMAK@@@@@@@@@@@@@@@
 
@@ -371,7 +371,7 @@ I_PF2_Equil=-1e3;	%-1e3 good	%-.5e4			%First guess, efit will found it.
 I_Div2_Equil=+3.3e3;	%3.2e3 good %3.3e3		%4e3 		
 
 %%%Sol current
- I_Sol_max =2.7e3%2.5e3                %[A] Max solenoid current, to achieve the desire Ip in RZIp.
+ I_Sol_max =2.7e3;%2.5e3                %[A] Max solenoid current, to achieve the desire Ip in RZIp.
 ISol_equil=-I_Sol_max;%.05e3;                            % [A] the current of the Sol in the target eq calc
 %If>0, Sol will attract the plasma, no lower PF and DIv are
 %needed.
@@ -380,19 +380,26 @@ ISol_equil=-I_Sol_max;%.05e3;                            % [A] the current of th
 
 %%%Time intervals
 nTime = 7;      	% Coil Waveform Timesteps	[-]
-discharge_time=100;                                                          %[ms], time duration of the flat-top 
-T_ramp_Sol=25;       %Seta as 25ms to match JJ               %[ms], min time to increase or decrease the Sol
+discharge_time=100; %[ms], time duration of the flat-top 
+
+T_ramp_Sol_loop=[25 10 5 2.5];
+
+tic %to measure time for the loop
+
+for loopM=1:length(T_ramp_Sol_loop) 
+
+T_ramp_Sol=T_ramp_Sol_loop(loopM)              %[ms], min time to increase or decrease the Sol
 
 t_add=2*T_ramp_Sol; %2 with short breakdown               %time for the aditional point>T_ramp_Sol
 
-time = [-4*T_ramp_Sol -2*T_ramp_Sol 0 T_ramp_Sol t_add ...
-      t_add+discharge_time+10 t_add+discharge_time+T_ramp_Sol+10]*1e-3;                   %[s]
+time = [-100 -50 0 T_ramp_Sol t_add ...
+      t_add+discharge_time+10 t_add+discharge_time+50]*1e-3;                   %[s]
  %%%%%% 
  
  %Points 3 and 4 are (0,I_Sol_start), (t,ISol_to). Lets find the equation
  %for that line, and create the point 5 so it has the same slope
  
- [coef]=polyfit([0 T_ramp_Sol],[I_Sol_max 0],1)
+ [coef]=polyfit([0 T_ramp_Sol],[I_Sol_max 0],1);
  
  %If t5=something, we get I_5 should be:
  I_5=coef(1)*t_add+coef(2); %=I_Sol_max, como debe ser. Por eso, uso I_max.!!
@@ -409,13 +416,13 @@ IPF2_Waveform =  [0,  NaN,        NaN,        NaN,           I_PF2_Equil,   I_PF
 IDiv1_Waveform = ISol_Waveform; %Div1 in series with Sol
 IDiv2_Waveform = [0,  NaN,        NaN,        NaN,           I_Div2_Equil,  I_Div2_Equil,  0];
 %%%%%
-CoilWaveforms = [ISol_Waveform; IPF1_Waveform; IPF2_Waveform; IDiv1_Waveform; IDiv2_Waveform]
+CoilWaveforms = [ISol_Waveform; IPF1_Waveform; IPF2_Waveform; IDiv1_Waveform; IDiv2_Waveform];
 
 
 %Loop voltage calc
 
 slope= (ISol_Waveform(5)-ISol_Waveform(3))/(time(5)-time(3));          %[A/t] slope of the ramp down of the Sol
-V_loop=mu0*turns(iSol)/(ZMax_Sol-ZMin_Sol)*pi*RSol^2*slope     %[V] 1 loop voltage induced by Sol only
+V_loop=abs(mu0*turns(iSol)/(ZMax_Sol-ZMin_Sol)*pi*RSol^2*slope)     %[V] 1 loop voltage induced by Sol only
 
 %VEST value: Vloop about 3V     GlobusM: about 2V
 
@@ -424,6 +431,61 @@ V_loop=mu0*turns(iSol)/(ZMax_Sol-ZMin_Sol)*pi*RSol^2*slope     %[V] 1 loop volta
 %Vloop=1.2V for 0.05(5ms) T ramp Sol, a bit low yet, but time is too low
 
 E=V_loop/(2*pi*0.45)            %[V/m]
+
+
+% %% Loop for Paschen plot
+% 
+%     %2) Paschen curves!
+%     C_1=[510 300]; %C_1 constant [ m^-1 Tor^-1] for H and He
+%     C_2=[1.25e4 3.4e4];  %C_2 constant [V m^-1 Tor^-1]
+%     Gas_type=["H_2","He"];
+%     p=linspace(1e-6,1e-3,100000);                           %[Tor]pressure of the prefill gas. size>1000 because if
+%                                                                             %not, It do not work properly
+%     Emin= @(L,p,C1,C2) C2*p./log(C1*p*L);
+% 
+%     T_ramp_Sol=[25 10 5 2.5];  
+% 
+% for tt=1:length(T_ramp_Sol)
+%     T_ramp=T_ramp_Sol(tt);
+%     t_add=2*T_ramp; %2 with short breakdown               %time for the aditional point>T_ramp_Sol
+% 
+%     time = [-100 -50 0 T_ramp t_add ...
+%       t_add+discharge_time+10 t_add+discharge_time+50]*1e-3;  
+%     %Loop voltage calc
+% 
+%     slope= (ISol_Waveform(5)-ISol_Waveform(3))/(time(5)-time(3));          %[A/t] slope of the ramp down of the Sol
+%     V_loop(tt)=mu0*turns(iSol)/(ZMax_Sol-ZMin_Sol)*pi*RSol^2*slope;     %[V] 1 loop voltage induced by Sol only
+%     E(tt)=abs(V_loop(tt)/(2*pi*0.45));  
+%     
+%  
+% 
+% end
+%         figure;
+%         %subplot(1,2,1)
+%         loglog(p,Emin(10,p,C_1(1),C_2(1)),'*-')
+%         hold on
+%         loglog(p,Emin(50,p,C_1(1),C_2(1)),'*-')
+%         loglog(p,Emin(100,p,C_1(1),C_2(1)),'*-')
+%         loglog(p,Emin(500,p,C_1(1),C_2(1)),'*-')
+%         %VEST
+%         loglog(p,3/(2*pi*0.36)*ones(1,length(p)),'b--','LineWidth', 0.95) 
+%         loglog([2e-5 2e-5],[10^-1 10^5],'b--','LineWidth', 0.95)
+%         loglog([3e-5 3e-5],[10^-1 10^5],'b-.','LineWidth', 0.95)
+%         %GlobusM
+%         loglog(p,4.5/(2*pi*0.36)*ones(1,length(p)),'k--','LineWidth', 0.95)
+%         loglog(p,8/(2*pi*0.36)*ones(1,length(p)),'k--','LineWidth', 0.95)
+%         loglog([3e-5 3e-5],[10^-1 10^5],'k--','LineWidth', 0.95)
+%         loglog([6e-5 6e-5],[10^-1 10^5],'k--','LineWidth', 0.95)
+%         %
+%         loglog(p,abs(E(1))*ones(1,length(p)),'r-','LineWidth', 0.95)           
+%         loglog(p,abs(E(2))*ones(1,length(p)),'r-','LineWidth', 1.15)   
+%         loglog(p,abs(E(3))*ones(1,length(p)),'r-','LineWidth', 1.35)  
+%         loglog(p,abs(E(4))*ones(1,length(p)),'r-','LineWidth', 1.55)  
+%         xlabel('Prefill pressure (Torr)')
+%         ylabel('E_{min} (V/m)')
+%         legend('L=10m','L=50m (Globus)','L=100m','L=500m','','VEST','','','GlobusM','','','T_{ramp}=50ms (original)','T_{ramp}=20ms','T_{ramp}=10ms','T_{ramp}=5ms')
+%         title(sprintf('Paschen curve, Gas=%s',Gas_type(1))); %d for numbers
+%         set(gca, 'FontSize', 13); %<- Set properties TFG
 
 %%  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -486,8 +548,9 @@ plasma_resistance=0.74*Z_eff*1.65*10^-9*log_col/(Te*10^-3)^(3/2); %[Ohm]
 %%%Plasma model and controls %%%%%%%%%%%%%%%%%%
 
 jprofile = fiesta_jprofile_topeol2( 'Topeol2', betaP, 1, li2, Ip );
-control = fiesta_control( 'diagnose',true, 'quiet',false, 'convergence', 1e-5, 'boundary_method',2 );
-
+control = fiesta_control( 'diagnose',false, 'quiet',false, 'convergence', 1e-5, 'boundary_method',2 );
+                            %diagnose was true. If false it do not show
+                            %equil plots
 %%  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@TARGET EQUILIBRIA@@@@@@@@@@@@@@
@@ -525,7 +588,7 @@ icoil_equil.Div2=CoilWaveforms(5,6);	%Div2 Equilibrium Current at time(5,6)
     equil=fiesta_equilibrium('ST', config, Irod, jprofile, control,efit_config, icoil_equil, signals, weights) %%EFIT!!!
     %It does the case in line 96!! The equil calc is in lin 124
 
-    close all %to close iterate solver pltos if converge
+    %close all %to close iterate solver pltos if converge
     
     %Now we have to extract the new currents from the equil, provided that EFIT
     %changed some of them to satisfy the conditions requested:
@@ -557,23 +620,26 @@ icoil_equil.Div2=CoilWaveforms(5,6);	%Div2 Equilibrium Current at time(5,6)
 %     %print -depsc2 NOMBREPLOT.eps
     
  %Plot from the demo in examples of FIESTA folder
-        section_figure=section(equil); %THIS IS A PLOT
-        
-        figure;
-        plot(equil)        
-        hold on
-        plot(vessel)
-        plot(coilset)
-        parametersshow(equil)   %this plots the parameters in the equil
-        title('Target equilibria')
+%         section_figure=section(equil); %THIS IS A PLOT
+%         
+         figure;
+         plot(equil)        
+         hold on
+         plot(vessel)
+         plot(coilset)
+         parametersshow(equil)   %this plots the parameters in the equil
+         title('Target equilibria ph2')
+         set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
             %Watch out, R0 in the plot is r0_mag, not r0_geom!!
-        %Filename = '_TargetEquilibrium';
-        %saveas(gcf, strcat(ProjectName,Filename,FigExt));
+        Filename = 'Target_equilibria';
+        saveas(gcf, strcat(FigDir,Filename,FigExt));
+        
+        clc %to delete all teh warnings that appears
 
-%Equilibrium parameters
+        %Equilibrium parameters
 
 parameters(equil); %its better in this way, because it shows units and coil currents. If you define a variable, it wont do that
-param_equil=parameters(equil)                             %Will be used in the null sensors
+param_equil=parameters(equil);                             %Will be used in the null sensors
 
 
 %%%%%%  Vessel time constant  %%%%%%%%%%%
@@ -637,34 +703,15 @@ z_sensors=get(sensor_btheta,'z'); %size 1*200
 
 global R_sensor Z_sensor
 [R_sensor,Z_sensor]=meshgrid(r_sensors,z_sensors); %size 200*200
-
-%Plot of the sensors
-%     figure; hold on; axis equal;
-%     plot(coilset);
-%     contour( get(equil,'Psi'),60,'Color','Black', 'LineWidth',0.5 );
-%     contour( get(equil,'Psi'),get(equil,'Psi_boundary')*[1 1],'Color','Black', 'LineWidth',1.5 );
-%     plot(vessel);
-%     fileName = 'ST_target_equilibrium';
-%     legend(gca,'hide');
-%     plot(sensor_btheta);
-%     %set(gca,'XLim',[0 1]);
-%     %set(gca,'YLim',[-1.5 1.5]);
-%     xlabel(gca,'R (m)');
-%     ylabel(gca,'Z (m)');
-%     title('Target equilibria phase 1 with sensors to null Bpol');
-%     % save_to_pdf( gcf, fileName );
-%     %%%OPtionf for tfg
-%     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-%     axis([0,1.1,-1.1,1.1]) 
-    
-        figure;
-        plot(equil)        
-        hold on
-        plot(vessel)
-        plot(coilset)
-        parametersshow(equil)   %this plots the parameters in the equil
-        title('Target equilibria')
-        plot(sensor_btheta);
+     
+%         figure;
+%         plot(equil)        
+%         hold on
+%         plot(vessel)
+%         plot(coilset)
+%         parametersshow(equil)   %this plots the parameters in the equil
+%         title('Target equilibria')
+%         plot(sensor_btheta);
 %%%%END OF FIESTA EQ@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 %% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -735,11 +782,11 @@ V_PF_input = NaN(nTime,nPF);            %Coil voltages are initiated to zero
     %%%optinos for tfg
     set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
     set(gca, 'FontSize', 13, 'LineWidth', 0.75);                    %<- Set properties TFG
-    %Filename = '_InputCurrents';
-    %saveas(gcf, strcat(ProjectName,Filename,FigExt));
-
-
-
+    Filename = 'Input_currents';
+    Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol)    
+    saveas(gcf, strcat(FigDir,Filename,FigExt));
+   
+    
 %Firstly the input profile is discretized in many intervals
 nTime_long = 1000;
 time_long = linspace(min(time),max(time),nTime_long);
@@ -883,6 +930,8 @@ PF_colors{iPF2} = 'Green';
     %the sense that the integration do not stops if the plasma collide
     %with the VV. 
     
+    %%%%%END RZIp as Slides, experimental%%%%%%%%%%%%%%%%%
+    
 %% %%%%%RZIp run%%%%%%%%%%%%%
 %It is run 2 times. The coils are current driven always, but the plasma changes form
 %current driven to voltage driven. The control vector u is defined in
@@ -928,39 +977,39 @@ I_Passive_VV=sum(I_Passive,2);
     %MANUAL PLOTS OF THE RESULTS OF RZIp%%%%%%%
 
         %%%I_PF_output and plasma current
-            figure;
-            subplot(3,1,1)
-            %plot(time_adaptive*1e3,I_PF_output/(1e3))
-            %hold on
-            plot(time_adaptive*1e3,Ip_output/(1e3))
-            ylabel('I (kA)')
-            title('Dynamic response SMART phase 1')
-            set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
-            %set(gca,'YLim',[-5 35]);
-            set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        %%%vOLTAGE
-            subplot(3,1,2)
-            plot(time_adaptive*1e3,V_PF_output/(1e3))
-            hold on
-            plot(time_adaptive*1e3,Vp_output/(1e3))
-            ylabel('V (kV)')
-            legend('Sol','PF2','PF3','Div1','Div2','Plasma')
-            set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
-            %set(gca,'YLim',[-1.500 1.500]);
-            set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        %%%I_PASSIVE VERUS TIME
-            subplot(3,1,3)
-            plot(time_adaptive*1e3,I_Passive_VV/(1e3))
-            xlabel(' time (ms)')
-            ylabel('I_{passive} (kA)')
-            set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
-            %set(gca,'YLim',[-800 800]);
-            set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-            
-            Filename = '_RZIpOutputs';
-            saveas(gcf, strcat(ProjectName,Filename,FigExt));
-          %print -depsc2 NOMBREPLOT.eps
-
+%             figure;
+%             subplot(3,1,1)
+%             %plot(time_adaptive*1e3,I_PF_output/(1e3))
+%             %hold on
+%             plot(time_adaptive*1e3,Ip_output/(1e3))
+%             ylabel('I (kA)')
+%             title('Dynamic response SMART phase 1')
+%             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
+%             %set(gca,'YLim',[-5 35]);
+%             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+%         %%%vOLTAGE
+%             subplot(3,1,2)
+%             plot(time_adaptive*1e3,V_PF_output/(1e3))
+%             hold on
+%             plot(time_adaptive*1e3,Vp_output/(1e3))
+%             ylabel('V (kV)')
+%             legend('Sol','PF2','PF3','Div1','Div2','Plasma')
+%             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
+%             %set(gca,'YLim',[-1.500 1.500]);
+%             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+%         %%%I_PASSIVE VERUS TIME
+%             subplot(3,1,3)
+%             plot(time_adaptive*1e3,I_Passive_VV/(1e3))
+%             xlabel(' time (ms)')
+%             ylabel('I_{passive} (kA)')
+%             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
+%             %set(gca,'YLim',[-800 800]);
+%             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+%             
+%             Filename = '_RZIpOutputs';
+%             saveas(gcf, strcat(ProjectName,Filename,FigExt));
+%           %print -depsc2 NOMBREPLOT.eps
+% 
             figure;           
             plot(time_adaptive*1e3,Ip_output/(1e3))
             ylabel('I_p (kA)')
@@ -969,126 +1018,151 @@ I_Passive_VV=sum(I_Passive,2);
             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
             %set(gca,'YLim',[-5 35]);
             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-
-            %Experimental plots to see Vp in detail
+            Filename = 'Ip';
+            Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+            saveas(gcf, strcat(FigDir,Filename,FigExt));
+            
             figure;
-            subplot(1,4,1)
-            plot(time_adaptive*1e3,I_PF_output(:,1)/(1e3))
-            xlabel(' t (ms)')            
-            ylabel(' I CS (kA)')
-            title('I Sol')
-            subplot(1,4,2)
-            plot(time_adaptive*1e3,Ip_output/(1e3))
-            ylabel('I_p (kA)')
-            xlabel(' t (ms)')
-            title('I_p phase 1')
-            subplot(1,4,3)
-            plot(time_adaptive*1e3,Vp_output)
-            xlabel('t (ms)')
-            ylabel('Vp (V)')            
-            title('Vp')
-            subplot(1,4,4)
-            plot(time_adaptive*1e3,V_PF_output(:,1))
-            xlabel('t (ms)')
-            ylabel('V Sol (V)')
-            title('V CS')
+            plot(time_adaptive*1e3,I_Passive_VV/(1e3))
+            xlabel(' time (ms)')
+            ylabel('I_{passive} (kA)')
+            title('I_{VV}')
+            set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
+            set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+            Filename = 'I_VV';
+            Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+            saveas(gcf, strcat(FigDir,Filename,FigExt));
+            
+            %Experimental plots to see Vp in detail
+            
+            %save_10ms=[time_adaptive Ip_output I_Passive_VV]
+            %save('10ms_time_Ip_IVV','save_10ms')
+            %%       
+%             
+%             figure;
+%             subplot(1,4,1)
+%             plot(time_adaptive*1e3,I_PF_output(:,1)/(1e3))
+%             xlabel(' t (ms)')            
+%             ylabel(' I CS (kA)')
+%             title('I Sol')
+%             subplot(1,4,2)
+%             plot(time_adaptive*1e3,Ip_output/(1e3))
+%             ylabel('I_p (kA)')
+%             xlabel(' t (ms)')
+%             title('I_p phase 1')
+%             subplot(1,4,3)
+%             plot(time_adaptive*1e3,Vp_output)
+%             xlabel('t (ms)')
+%             ylabel('Vp (V)')            
+%             title('Vp')
+%             subplot(1,4,4)
+%             plot(time_adaptive*1e3,V_PF_output(:,1))
+%             xlabel('t (ms)')
+%             ylabel('V Sol (V)')
+%             title('V CS')
+            
+            %DO NOT UNDERSTAND WHY THE F Vp IS NOT Vloop AT LEAST AT THE 
+            %BEGINNING!!!!!!!!!!!!!
 %%% END RZIP@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
-    %Inside uFinal(x)
-    figure;
-    subplot(2,4,1)
-    plot(time_adaptive*1e3,uFinal(:,end)/(1e3))  
-    xlabel('t(ms)')
-    ylabel('Ip (kA)')
-    title('uFinal(:,end)')
-        subplot(2,4,2)
-    plot(time_adaptive*1e3,uFinal(:,[end-5:end-1]))  
-    xlabel('t(ms)')
-    ylabel('¿?')
-    title('uFinal(:,[end-5:end-1]) ¿?')
-            subplot(2,4,3)
-    plot(time_adaptive*1e3,uFinal(:,[1:end-6])/(1e3))  
-    xlabel('t(ms)')
-    ylabel('I_VV (kA)')
-    title('uFinal(:,[1:end-6])')
-                subplot(2,4,4)
-    plot(time_adaptive*1e3,sum(uFinal(:,[1:end-6])/(1e3),2))  
-    xlabel('t(ms)')
-    ylabel('I_VV(total) (kA)')
-    title('sum(uFinal(:,[1:end-6]),2)')
-            subplot(2,4,5)
-    plot(time_adaptive*1e3,uFinal(:,[end-5:end-1])./uFinal(:,end))  
-    xlabel('t(ms)')
-    ylabel('I PF (kA)')
-    title('uFinal(:,[end-5:end-1])/uFinal(:,end)')
-            subplot(2,4,7)
-                plot(time_adaptive*1e3,V_PF_output/(1e3))
-            hold on
-            plot(time_adaptive*1e3,Vp_output/(1e3))
-            ylabel('V (kV)')
-            legend('Sol','PF2','PF3','Div1','Div2','Plasma')
-            title('Volages')
-            %set(gca,'YLim',[-1.500 1.500]);
-            subplot(2,4,8)
-            plot(time_adaptive*1e3,I_PF_output/(1e3))
-            title('I_PF (kA)')
-            
-            %Weirds elements of uFinal in detail
-            figure;
-            subplot(2,5,1)
-            plot(time_adaptive*1e3,uFinal(:,end-5))  
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-5)')
-            subplot(2,5,2)
-            plot(time_adaptive*1e3,uFinal(:,end-4))  
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-4)')
-            subplot(2,5,3)
-            plot(time_adaptive*1e3,uFinal(:,end-3))  
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-3)')
-            subplot(2,5,4)
-            plot(time_adaptive*1e3,uFinal(:,end-2))  
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-2)')           
-            subplot(2,5,5)
-            plot(time_adaptive*1e3,uFinal(:,end-1))  
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-1)')             
-            subplot(2,5,6)
-            plot(time_adaptive*1e3,uFinal(:,end-5)./uFinal(:,end))  
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-5)/uFinal(:,end)')    
-            subplot(2,5,7)
-            plot(time_adaptive*1e3,uFinal(:,end-4)./uFinal(:,end))    
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-4)/uFinal(:,end)')    
-            subplot(2,5,8)
-            plot(time_adaptive*1e3,uFinal(:,end-3)./uFinal(:,end))    
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-3)/uFinal(:,end)')    
-            subplot(2,5,9)
-            plot(time_adaptive*1e3,uFinal(:,end-2)./uFinal(:,end))    
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-2)/uFinal(:,end)')              
-            subplot(2,5,10)
-            plot(time_adaptive*1e3,uFinal(:,end-1)./uFinal(:,end))    
-            xlabel('t(ms)')
-           ylabel('¿?')
-           title('uFinal(:,end-1)/uFinal(:,end)')    
+ %%%%%%%%%%Inside uFinal(x)%%%%%55
+%     figure;
+%     subplot(2,4,1)
+%     plot(time_adaptive*1e3,uFinal(:,end)/(1e3))  
+%     xlabel('t(ms)')
+%     ylabel('Ip (kA)')
+%     title('uFinal(:,end)')
+%         subplot(2,4,2)
+%     plot(time_adaptive*1e3,uFinal(:,[end-5:end-1]))  
+%     xlabel('t(ms)')
+%     ylabel('¿?')
+%     title('uFinal(:,[end-5:end-1]) ¿?')
+%             subplot(2,4,3)
+%     plot(time_adaptive*1e3,uFinal(:,[1:end-6])/(1e3))  
+%     xlabel('t(ms)')
+%     ylabel('I_VV (kA)')
+%     title('uFinal(:,[1:end-6])')
+%                 subplot(2,4,4)
+%     plot(time_adaptive*1e3,sum(uFinal(:,[1:end-6])/(1e3),2))  
+%     xlabel('t(ms)')
+%     ylabel('I_VV(total) (kA)')
+%     title('sum(uFinal(:,[1:end-6]),2)')
+%             subplot(2,4,5)
+%     plot(time_adaptive*1e3,uFinal(:,[end-5:end-1])./uFinal(:,end))  
+%     xlabel('t(ms)')
+%     ylabel('I PF (kA)')
+%     title('uFinal(:,[end-5:end-1])/uFinal(:,end)')
+%             subplot(2,4,7)
+%                 plot(time_adaptive*1e3,V_PF_output/(1e3))
+%             hold on
+%             plot(time_adaptive*1e3,Vp_output/(1e3))
+%             ylabel('V (kV)')
+%             legend('Sol','PF2','PF3','Div1','Div2','Plasma')
+%             title('Volages')
+%             %set(gca,'YLim',[-1.500 1.500]);
+%             subplot(2,4,8)
+%             plot(time_adaptive*1e3,I_PF_output/(1e3))
+%             title('I_PF (kA)')
+%             
+%             %Weirds elements of uFinal in detail
+%             figure;
+%             subplot(2,5,1)
+%             plot(time_adaptive*1e3,uFinal(:,end-5))  
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-5)')
+%             subplot(2,5,2)
+%             plot(time_adaptive*1e3,uFinal(:,end-4))  
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-4)')
+%             subplot(2,5,3)
+%             plot(time_adaptive*1e3,uFinal(:,end-3))  
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-3)')
+%             subplot(2,5,4)
+%             plot(time_adaptive*1e3,uFinal(:,end-2))  
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-2)')           
+%             subplot(2,5,5)
+%             plot(time_adaptive*1e3,uFinal(:,end-1))  
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-1)')             
+%             subplot(2,5,6)
+%             plot(time_adaptive*1e3,uFinal(:,end-5)./uFinal(:,end))  
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-5)/uFinal(:,end)')    
+%             subplot(2,5,7)
+%             plot(time_adaptive*1e3,uFinal(:,end-4)./uFinal(:,end))    
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-4)/uFinal(:,end)')    
+%             subplot(2,5,8)
+%             plot(time_adaptive*1e3,uFinal(:,end-3)./uFinal(:,end))    
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-3)/uFinal(:,end)')    
+%             subplot(2,5,9)
+%             plot(time_adaptive*1e3,uFinal(:,end-2)./uFinal(:,end))    
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-2)/uFinal(:,end)')              
+%             subplot(2,5,10)
+%             plot(time_adaptive*1e3,uFinal(:,end-1)./uFinal(:,end))    
+%             xlabel('t(ms)')
+%            ylabel('¿?')
+%            title('uFinal(:,end-1)/uFinal(:,end)')    
                 
     %This mean that the last column of uFinal is Ip, and the previous one
     %are coils current and structure's current, so no RIp,ZIp :((
+    
+    %%%%END INSIDE UFINAL%%%%%%%%%%%%%%%%%%%
+    
 %% %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 %@@@@@@BREAKDOWN CALC@@@@@@@@@@@@@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -1120,7 +1194,7 @@ coilsetVV=fiesta_loadassembly(coilset, vessel);
 configVV = fiesta_configuration( 'SMART with VV', Grid, coilsetVV);
   
 
-%% %%Breakdown non optimised(only Sol)%%%%%%%%
+%%%%Breakdown non optimised(only Sol)%%%%%%%%
  coil_currents_Break_non = zeros(1,nPF);
  coil_currents_Break_non(iSol) = I_Sol_max; %current at the top previous to ramp down
 % 
@@ -1215,7 +1289,6 @@ configVV = fiesta_configuration( 'SMART with VV', Grid, coilsetVV);
 %     title('Quiver plot Bpol Break Non optimized (Sol only)')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
 
 
 %So, what I will do is a loop with the time from RZIp, to define the
@@ -1300,21 +1373,21 @@ psi_null=get(psi_null,'data','2D'); %this retunrs 2D data, so no need to reshape
 psi_null_interpn=  @(r,z) interpn(zGrid,rGrid,psi_null,z,r,'mikama');        
 psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    
     
-    figure;
-    contour(R_in,Z_in,log10(psi_null_ins_VV),100)
-    hold on
-    plot(vessel)
-    plot(coilset)
-    colormap(Gamma_II)
-    c=colorbar; %colorbar
-        ylabel(c, 'log10(\psi)');
-    view(2) %2D view
-    plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-      [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-     xlabel('R (m)')
-     ylabel('Z (m)')
-     title(sprintf('log10(psi)  at t=%d ms (iter %d/%d) 100c',time_loop(loop)*1e3,loop,length(time_loop)))
-          
+%     figure;
+%     contour(R_in,Z_in,log10(psi_null_ins_VV),1000)
+%     hold on
+%     plot(vessel)
+%     plot(coilset)
+%     colormap(Gamma_II)
+%     c=colorbar; %colorbar
+%         ylabel(c, 'log10(\psi)');
+%     view(2) %2D view
+%     plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+%       [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+%      xlabel('R (m)')
+%      ylabel('Z (m)')
+%      title(sprintf('log10(psi)  at t=%d ms (iter %d/%d) 1000c',time_loop(loop)*1e3,loop,length(time_loop)))
+%           
  %Extraction of the fields (Earth inside)!
  [FieldsBreak, FieldsBreakNoEarth]=fields(equil_break);
     
@@ -1398,8 +1471,8 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
 %     title(sprintf('log10(Bpol) and Bpol quiver at t %d ms (iter %d/%d (P2)',time_loop(loop)*1e3,loop,length(time_loop)))
 
 
-    %Field of the plasma with the circular wire approx
-    
+%     %Field of the plasma with the circular wire approx
+%     
 %     for k=1:length(R_in)
 %     
 %     for l=1:length(Z_in)
@@ -1432,39 +1505,52 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
 %         title(sprintf('log10(B_pol plasma)  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
 %         
         %Bphi structure
-        figure;
-        contourf(R_in,Z_in,log10(FieldsBreak.VV.Bphi));
-        shading('interp') %this is to make the transition between values continuous,
-        %instedad of discontinuously between pixels  
-        colormap(Gamma_II)
-        hold on;
-        plot(vessel)
-        colorbar %colorbar
-        view(2) %2D view
-        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-        [  min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        title(sprintf('log10(B_phi [T]) at t %d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-    
+%         figure;
+%         contourf(R_in,Z_in,log10(FieldsBreak.VV.Bphi));
+%         shading('interp') %this is to make the transition between values continuous,
+%         %instedad of discontinuously between pixels  
+%         colormap(Gamma_II)
+%         hold on;
+%         plot(vessel)
+%         colorbar %colorbar
+%         view(2) %2D view
+%         plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+%         [  min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'r.--')
+%         xlabel('R (m)')
+%         ylabel('Z (m)')
+%         title(sprintf('log10(B_phi [T]) at t %d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
+%     
         %B pol alone
-         figure; 
+        figure;  %in Gauss=10^-4T
         %contourf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none');
-        %surf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none');
-        contour(R_in,Z_in,log10(FieldsBreak.VV.Bpol),1000);
-        shading('interp') %this is to make the transition between values continuous,
+        %surf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none'); shading('interp') %this is to make the transition between values continuous,
         %instedad of discontinuously between pixels
-        colormap(Gamma_II)
+        contourf(R_in,Z_in,log10(FieldsBreak.VV.Bpol),'ShowText','on')
         hold on;
-        plot(vessel)
-        colorbar %colorbar
+        hh=plot(vessel);
+        set(hh, 'EdgeColor', 'k')
+        hh=plot(coilset);
+        set(hh, 'EdgeColor', 'k')
+        colormap(Gamma_II)
+        c=colorbar; %colorbar
+        ylabel(c, 'log10(Bpol (T))');  
+                %Try to show max and min of colorbar
+        %t=get(c,'Limits');
+        %set(c,'Ticks',linspace(t(1),t(2),10));
         view(2) %2D view
+        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
         plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
         [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
         xlabel('R (m)')
         ylabel('Z (m)')
-        title(sprintf('log10(B_pol)  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
-    
+        %title(sprintf('B_{pol}  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
+        title(sprintf('B_{pol} at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))        
+        Filename = 'Bpol';
+        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        saveas(gcf, strcat(FigDir,Filename,FigExt));
+        
+        
+        
     
 %         figure; 
 %         subplot(2,2,1)
@@ -1569,193 +1655,33 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         %same. No need for loop, to avoid problems. I'll do it manually xD.
         %However, here I will do the calc inside all the VV
       
-    %i) Integrator with phi
-        %Now that we have the field, we want to comput the field lines, whose eq is
-        %cross(B,dr)=0 ==> Br/dr=Bphi/(r dphi)=Bz/dz =cte=tt
-        %I have to create a function. I dont want the constant tt, and I can remove
-        %it by diving the 3 eq Br=ctt*dr, Bphi=ctt*r*dphi, Bz=ctt*dz between each other
-        %One of the coordinates have to be the independent one, and phi seems the
-        %best option, since is >0 while the rest are ><0, and phi increase (or
-        %decrease) when you follow a field line. (Carlos Soria)
 
         %Grid
         %I redefine the grid to compute the connection length, for less computer
         %demands (time)
 
-        n_pnts_insideL=15 %10%25 for a_eff=0.15;            %100 is the ideal to have good plots of the fields, but the L int failures. 
+        n_pnts_insideL=30; %15%30 for accurate           %100 is the ideal to have good plots of the fields, but the L int failures. 
 
         r_inside_VVL=linspace(VesselRMinPoint,VesselRMaxPoint,n_pnts_insideL); 
         z_inside_VVL=linspace(VesselZMinPoint,VesselZMaxPoint,n_pnts_insideL);
 
         %Plot
-%         [r_ins_VVL,z_ins_VVL]=meshgrid(r_inside_VVL,z_inside_VVL);
-%         figure;
-%         plot(r_ins_VVL,z_ins_VVL,'r.')
-%         hold on
-%         plot(vessel)
-%         xlabel('R (m)')
-%         ylabel('Z (m)')
-
-        %Points inside, without the extremal points. This will be used in the ode45
-        r_inside_VV_noLimits=r_inside_VVL %r_inside_VVL(2:end-1);
-        z_inside_VV_noLimits=z_inside_VVL %z_inside_VVL(2:end-1);
-                        %Now it has all the points!!!!
-     
-        %Mesh to future plots
-        [r_insVV_noLimit,z_insVV_noLimit]=meshgrid(r_inside_VV_noLimits,z_inside_VV_noLimits);
-     
-        r0_z0_L0_U0=[0 0 0 0]; %the third column is always zero, since L starts at 0
-
-        for i=1:length(r_inside_VV_noLimits)
-
-            for j=1:length(z_inside_VV_noLimits)
-        
-                points=[r_inside_VV_noLimits(i) z_inside_VV_noLimits(j)];          
-                r0_z0_L0_U0=[ r0_z0_L0_U0; points 0 0];    %U(0)=0 (arbitrary)    
-            end
-    
-        end
-
-        %I have the additional point 0 0 0 form the begining, that i can remove
-        %easily with
-        r0_z0_L0_U0=r0_z0_L0_U0(2:end,:);
-    
-    %%%%%%%
-        
-        phi_values=1000; 
-        n_iter=3000         %1000                                %integer, Number of iterations!!!!
-        phiSpan=linspace(0,2*pi*n_iter,phi_values*n_iter);    %the range of values of phi to do the integration. remember phi is
-                                        %the independent variable. To do more than 1 loop, we multiply
-                                        %by an integer, n_iter
-        L_max=3000;                                                 %max value for the integration; when L achieves
-                                                            %this value, the integration stops. ST have around 50m.
-
-        odefun= @(phi, rzLU) Field_LineIntegrator(phi,rzLU,FieldsBreak.interpn.Br,...
-            FieldsBreak.interpn.Bz,FieldsBreak.interpn.Bphi);
-        event_colission_wall=@(phi,rzLU)Colission_wall(phi,rzLU,VesselRMaxPoint,...
-            VesselRMinPoint,VesselZMaxPoint,VesselZMinPoint,FieldsBreak.interpn.Br,...
-            FieldsBreak.interpn.Bz,FieldsBreak.interpn.Bphi,L_max); 
-        options = odeset('OutputFcn',@ode_progress_bar,'Events',event_colission_wall,'AbsTol',1e-10,'RelTol',1e-6); 
-                                    %I include a fiesta funciton to show the progress of the ode
-
-
-        %%%%%%%%SINGLE FIELD LINE TRACER
-        tic              %to know the time
-        %Single integrator and plotter of lines
-            %need to find i for the chosen R,Z value in r0_z0_L0_U0.
-            %I= 85 for a line inside, 49 for a max L outside, 152 for the
-            %outward arm (Z>0). 135 for the outward Z<0 line. 64 for the upper
-            %arm
-        
-            i=77 %looked in the vector
-            [phi_fieldline, rzLU_fieldline]=ode45(odefun,phiSpan,r0_z0_L0_U0(i,:),options);        %ode15s Carlos
-    
-            %To save the last values of R,Z,L
-            RZLU_end(i,1)=rzLU_fieldline(end,1);
-            RZLU_end(i,2)=rzLU_fieldline(end,2);
-            RZLU_end(i,3)=rzLU_fieldline(end,3);                            %this contains L
-            RZLU_end(i,4)=rzLU_fieldline(end,4);    %this contains U
-        
-        % %%Plot of one of the line
-        % 
+        [r_ins_VVL,z_ins_VVL]=meshgrid(r_inside_VVL,z_inside_VVL);
         figure;
-        plot3(r0_z0_L0_U0(i,1),0,r0_z0_L0_U0(i,2),'k*','LineWidth',3)
-        hold on;
-        plot3(vessel)
-        plot3(coilset)
-        plot3(rzLU_fieldline(:,1).*cos(phi_fieldline),rzLU_fieldline(:,1).*sin(phi_fieldline),...
-            rzLU_fieldline(:,2),'r','LineWidth',3)
-        xlabel('x (m)');ylabel('y (m)');zlabel('z (m)');  
-        hold on
-        plot3(rzLU_fieldline(length(rzLU_fieldline),1).*cos(phi_fieldline(length(rzLU_fieldline)))...
-            ,rzLU_fieldline(length(rzLU_fieldline),1).*sin(phi_fieldline(length(rzLU_fieldline))),...
-            rzLU_fieldline(length(rzLU_fieldline),2),'g*','LineWidth',3)
-        title('Field line integration phi (single)')
-        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        %legend('Starting point (Point with less Bpol)','Field line',...
-
-        %%%%%%%%END One line tracer%%%%%%%%%%%%%5
-    
-    
-    %So, gotta solve 10^2*10^2=10^4 eq xD. Since I am only interested in L,
-    %could do a for loop simply saving the L value. Will do that:
-    
-        for i=1:length(r0_z0_L0_U0)
-            fprintf('Iter %d de %d',i,length(r0_z0_L0_U0))
-            [phi_fieldline, rzLU_fieldline]=ode45(odefun,phiSpan,r0_z0_L0_U0(i,:),options);        %ode15s Carlos
-    
-            %To save the last values of R,Z,L, U
-            RZLU_end(i,1)=rzLU_fieldline(end,1);
-            RZLU_end(i,2)=rzLU_fieldline(end,2);
-            RZLU_end(i,3)=rzLU_fieldline(end,3);                    %this contains L
-            RZLU_end(i,4)=rzLU_fieldline(end,4);    
-        end
-       time_int_phi=toc           %time of the ode
-    
-       %To store start points that do not collide: first I get the index of both R
-        %and Z, but together, since they do not collide if oth R and Z are greater
-        %than the min value, and lower than the greatest value
-    
-            RZ_store_index=RZLU_end(:,1)<VesselRMaxPoint & ...
-                RZLU_end(:,1)>VesselRMinPoint & RZLU_end(:,2)<VesselZMaxPoint &...
-                RZLU_end(:,2)>VesselZMinPoint; %100*1
-                        
-            RZ_no_collide=[r0_z0_L0_U0(RZ_store_index,1) r0_z0_L0_U0(RZ_store_index,2)];    
-       
-        %WHEN INCLUDING ALL THE POINTS, WEIRD THINGS HAPPENS WITH THE
-        %POINTS AT THE BORDER OF THE GRID, SO THAT THE NON COLLIDE VECTOR
-        %COLLIDE SOME OF THOSE POINTS
-       
-        %Plot contour
-        L_int=reshape(RZLU_end(:,3),size(r_insVV_noLimit,1),size(r_insVV_noLimit,2));
-        
-        figure;
-        contourf(r_insVV_noLimit,z_insVV_noLimit,L_int,10)
-        %surf(r_insVV_noLimit,z_insVV_noLimit,L_int,'EdgeColor','none'), shading('interp')
-        hold on
-        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'g.--')
-        plot(RZ_no_collide(:,1),RZ_no_collide(:,2),'m*')
-        hh=plot(vessel);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        hh=plot(coilset);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        colormap(Gamma_II)
-        c=colorbar; %colorbar
-        ylabel(c, 'L(m)');
-        view(2) %2D view
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        legend('L','Field null region')
-        title(sprintf('L  at t=%d ms (iter %d/%d) PHI',time_loop(loop)*1e3,loop,length(time_loop)))          
-    
-        %Plot contour 'potential'
-        U_int=reshape(RZLU_end(:,4),size(r_insVV_noLimit,1),size(r_insVV_noLimit,2));
-        figure;
-        contourf(r_insVV_noLimit,z_insVV_noLimit,U_int,10)
-        %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
+        plot(r_ins_VVL,z_ins_VVL,'r.')
         hold on
         plot(vessel)
-        plot(coilset)
-        colormap(Gamma_II)
-        c=colorbar; %colorbar
-        ylabel(c, 'U/Vloop');
-        view(2) %2D view
-        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
         xlabel('R (m)')
         ylabel('Z (m)')
-        title(sprintf('Pseudo potential  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
-            
+        title(sprintf('meshgrid for the integration with %d^2 points',n_pnts_insideL))
 
-     %ii) Integrator with Lp
-            %thi is another way to integrate!
+        %Points inside, without the extremal points. This will be used in the ode45
+        r_inside_VV_noLimits=r_inside_VVL; %r_inside_VVL(2:end-1);
+        z_inside_VV_noLimits=z_inside_VVL; %z_inside_VVL(2:end-1);
+            %NOW IT CONTAINS ALL TEH POINTS!!!
 
-        %Grid
-        %I redefine the grid to compute the connection length, for less computer
-        %demands (time)
+        [r_insVV_noLimit,z_insVV_noLimit]=meshgrid(r_inside_VV_noLimits,z_inside_VV_noLimits);
+
 
         r0_z0_L0_Phi0_U0=[0 0 0 0 0]; 
             %note it has to be r z fro using the same event function
@@ -1778,8 +1704,8 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
             
         Lp_values=1000; 
         n_iterLp=3000;         %1000                                %integer, Number of iterations!!!!
-        LpSpan=linspace(0,10*n_iterLp,phi_values*n_iterLp);    %the range of values of phi
-        L_max=3000;                                                 %max value for the integration; when L achieves
+        LpSpan=linspace(0,10*n_iterLp,Lp_values*n_iterLp);    %the range of values of phi
+        L_max=10000;                                                 %max value for the integration; when L achieves
                                                             %this value, the integration stops. ST have around 50m.
 
         odefun= @(Lp, rzLphiU) Field_LineIntegrator_Lp(Lp,rzLphiU,FieldsBreak.interpn.Br,...
@@ -1790,42 +1716,42 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         options = odeset('OutputFcn',@ode_progress_bar,'Events',event_colission_wall,'AbsTol',1e-10,'RelTol',1e-6); 
                                     %I include a fiesta funciton to show the progress of the ode
 
-
-        %% %%%%%%SINGLE FIELD LINE TRACER
         tic              %to know the time
+        %%%%%%%%SINGLE FIELD LINE TRACER
+
         %Single integrator and plotter of lines
             %need to find i for the chosen R,Z value in r0_z0_L0_U0.
             %I= 85 for a line inside, 49 for a max L outside, 152 for the
             %outward arm (Z>0). 135 for the outward Z<0 line. 64 for the upper
             %arm
         
-            i=1 %looked in the vector
-            [Lp_fieldline, rzLphiU_fieldline]=ode45(odefun,LpSpan,r0_z0_L0_Phi0_U0(i,:),options);        %ode15s Carlos
-    
-            %To save the last values of R,Z,L
-            RZLPhiU_end(i,1)=rzLphiU_fieldline(end,1);
-            RZLPhiU_end(i,2)=rzLphiU_fieldline(end,2);
-            RZLPhiU_end(i,3)=rzLphiU_fieldline(end,3);                          
-            RZLPhiU_end(i,4)=rzLphiU_fieldline(end,4);   
-            RZLPhiU_end(i,5)=rzLphiU_fieldline(end,5);
-        % %%Plot of one of the line
-        % 
-        figure;
-        plot3(r0_z0_L0_Phi0_U0(i,1),r0_z0_L0_Phi0_U0(i,3),r0_z0_L0_Phi0_U0(i,2),'k*','LineWidth',3)
-        hold on;
-        plot3(vessel)
-        plot3(coilset)
-        plot3(rzLphiU_fieldline(:,1).*cos(rzLphiU_fieldline(:,3)),rzLphiU_fieldline(:,1).*sin(rzLphiU_fieldline(:,3)),...
-            rzLphiU_fieldline(:,2),'r','LineWidth',3)
-        xlabel('x (m)');ylabel('y (m)');zlabel('z (m)');  
-        hold on
-        plot3(rzLphiU_fieldline(end,1).*cos(rzLphiU_fieldline(end,3)),rzLphiU_fieldline(end,1).*sin(rzLphiU_fieldline(end,3)),...
-            rzLphiU_fieldline(end,2),'g*','LineWidth',3)
-        title('Field line integration Lp (single)')
-        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        %legend('Starting point (Point with less Bpol)','Field line',...
+%             i=1 %looked in the vector
+%             [Lp_fieldline, rzLphiU_fieldline]=ode45(odefun,LpSpan,r0_z0_L0_Phi0_U0(i,:),options);        %ode15s Carlos
+%     
+%             %To save the last values of R,Z,L
+%             RZLPhiU_end(i,1)=rzLphiU_fieldline(end,1);
+%             RZLPhiU_end(i,2)=rzLphiU_fieldline(end,2);
+%             RZLPhiU_end(i,3)=rzLphiU_fieldline(end,3);                          
+%             RZLPhiU_end(i,4)=rzLphiU_fieldline(end,4);   
+%             RZLPhiU_end(i,5)=rzLphiU_fieldline(end,5);
+%         % %%Plot of one of the line
+%         % 
+%         figure;
+%         plot3(r0_z0_L0_Phi0_U0(i,1),r0_z0_L0_Phi0_U0(i,3),r0_z0_L0_Phi0_U0(i,2),'k*','LineWidth',3)
+%         hold on;
+%         plot3(vessel)
+%         plot3(coilset)
+%         plot3(rzLphiU_fieldline(:,1).*cos(rzLphiU_fieldline(:,3)),rzLphiU_fieldline(:,1).*sin(rzLphiU_fieldline(:,3)),...
+%             rzLphiU_fieldline(:,2),'r','LineWidth',3)
+%         xlabel('x (m)');ylabel('y (m)');zlabel('z (m)');  
+%         hold on
+%         plot3(rzLphiU_fieldline(end,1).*cos(rzLphiU_fieldline(end,3)),rzLphiU_fieldline(end,1).*sin(rzLphiU_fieldline(end,3)),...
+%             rzLphiU_fieldline(end,2),'g*','LineWidth',3)
+%         title('Field line integration Lp (single)')
+%         set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+%         %legend('Starting point (Point with less Bpol)','Field line',...
 
-        %% %%%%%%END One line tracer%%%%%%%%%%%%%5
+        % %%%%%%END One line tracer%%%%%%%%%%%%%5
     
     %So, gotta solve 10^2*10^2=10^4 eq xD. Since I am only interested in L,
     %could do a for loop simply saving the L value. Will do that:
@@ -1842,10 +1768,8 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
             RZLPhiU_end(i,5)=rzLphiU_fieldline(end,5);
         end
        time_int_Lp=toc           %time of the ode
-        %To store start points that do not collide: first I get the index of both R
-        %and Z, but together, since they do not collide if oth R and Z are greater
-        %than the min value, and lower than the greatest value
-      %To store start points that do not collide: first I get the index of both R
+        
+       %To store start points that do not collide: first I get the index of both R
         %and Z, but together, since they do not collide if oth R and Z are greater
         %than the min value, and lower than the greatest value
     
@@ -1864,6 +1788,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
                 RZ_no_collideLp(:,1)>VesselRMinPoint & RZ_no_collideLp(:,2)<VesselZMaxPoint &...
                 RZ_no_collideLp(:,2)>VesselZMinPoint;
             RZ_no_collideLp=[RZ_no_collideLp(IndexLp,1) RZ_no_collideLp(IndexLp,2)];
+                   
        
         %Plot contour
         L_int=reshape(RZLPhiU_end(:,3),size(r_insVV_noLimit,1),size(r_insVV_noLimit,2));
@@ -1883,32 +1808,125 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         set(hh,'HandleVisibility','off');
         colormap(Gamma_II)
         c=colorbar; %colorbar
+        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
         ylabel(c, 'L(m)');
         xlabel('R (m)')
         ylabel('Z (m)')
-        legend('L','Field null region')
-        title(sprintf('L  at t=%d ms (iter %d/%d) LP',time_loop(loop)*1e3,loop,length(time_loop)))          
-    
+        legend('L','Field null region','Non colliding start points')
+        %title(sprintf('L  at t=%d ms (iter %d/%d) LP',time_loop(loop)*1e3,loop,length(time_loop)))   
+        title(sprintf('L at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
+        Filename = 'L';
+        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        saveas(gcf, strcat(FigDir,Filename,FigExt));
+        
+        
         %Plot contour 'potential'
         U_int=reshape(RZLPhiU_end(:,5),size(r_insVV_noLimit,1),size(r_insVV_noLimit,2));
         figure;
         contourf(r_insVV_noLimit,z_insVV_noLimit,U_int,10)
         %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
         hold on
-        plot(vessel)
-        plot(coilset)
+        hh=plot(vessel);
+        set(hh, 'EdgeColor', 'k')
+        hh=plot(coilset);
+        set(hh, 'EdgeColor', 'k')
         colormap(Gamma_II)
         c=colorbar; %colorbar
         ylabel(c, 'U/Vloop');
         view(2) %2D view
         plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
             [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
         xlabel('R (m)')
         ylabel('Z (m)')
-        title(sprintf('Pseudo potential  at t=%d ms (iter %d/%d) LP',time_loop(loop)*1e3,loop,length(time_loop)))          
-    
-end   
+        %title(sprintf('Pseudo potential  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
+        title(sprintf('Pseudo-potential at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
+        Filename = 'Pseudo';
+        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        saveas(gcf, strcat(FigDir,Filename,FigExt));
+        
+        %Plot Lloyd criteria
+        Lloyd=E.*FieldsBreak.VV.Bphi./FieldsBreak.VV.Bpol;
+        
+        figure;
+        contourf(R_in,Z_in,log10(Lloyd),'ShowText','on')
+        %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
+        hold on
+        hh=plot(vessel);
+        set(hh, 'EdgeColor', 'k')
+        hh=plot(coilset);
+        set(hh, 'EdgeColor', 'k')
+        colormap(Gamma_II)
+        c=colorbar; %colorbar
+        ylabel(c, 'log10(E*Bphi/Bpol (V/m))');
+        view(2) %2D view
+        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+        xlabel('R (m)')
+        ylabel('Z (m)')
+        %title(sprintf('Lloyd criteria  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
+        title(sprintf('Lloyd criteria at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
+        Filename = 'LLoyd';
+        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        saveas(gcf, strcat(FigDir,Filename,FigExt));
+        
+        
+        %Experimental
+        figure;
+        contourf(r_insVV_noLimit,z_insVV_noLimit,U_int./L_int*V_loop,10)
+        %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
+        hold on
+        hh=plot(vessel);
+        set(hh, 'EdgeColor', 'k')
+        hh=plot(coilset);
+        set(hh, 'EdgeColor', 'k')
+        colormap(Gamma_II)
+        c=colorbar; %colorbar
+        ylabel(c, 'U/L (m^-1)');
+        view(2) %2D view
+        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+        xlabel('R (m)')
+        ylabel('Z (m)')
+        %title(sprintf('Pseudo potential  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
+        title(sprintf('U/L at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
+        Filename = 'U_L';
+        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        saveas(gcf, strcat(FigDir,Filename,FigExt));
 
+
+end    %end loop time (not in use right now)!!!!
+
+        L_emp(loopM)=L_aver(loop);              %[m]to store Lempirical!!!
+        I_PassiveVV(loopM)=IPassive_loop; %[kA]to store total eddy at t=0ms
+end  %end loop time ramp sol
+
+time_loopRamp=toc %time loop for ramp time
+
+    %%Plots L_emp and I_passiveVV
+    
+    figure;
+    plot(T_ramp_Sol_loop,L_emp)
+    xlabel('t_rd (ms)')
+    ylabel('L_emp (m)')
+    title('L empirical vs ramp-down time')
+    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+        Filename = 'L_emp';
+        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        saveas(gcf, strcat(FigDir,Filename,FigExt));
+
+    figure;
+    plot(T_ramp_Sol_loop,I_PassiveVV)
+    xlabel('t_rd (ms)')
+    ylabel('I_VV (kA)')
+    title('I_VV vs ramp-down time')
+    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+        Filename = 'L_emp';
+        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        saveas(gcf, strcat(FigDir,Filename,FigExt));        
+    
 % %%
 % figure;
 % subplot(1,2,2)
@@ -1947,22 +1965,20 @@ end
 
 %%%%%%TEST FIELD LINE METHOD
 
-%Lets plot many things
-   
 	figure;
-    contour(R_in,Z_in,log10(R_in.*sqrt(1+FieldsBreak.VV.Bpol.^2./FieldsBreak.VV.Bphi.^2)),1000);
+    contour(R_in,Z_in,log10(sqrt(1+FieldsBreak.VV.Bphi.^2./FieldsBreak.VV.Bpol.^2)),500);
     shading('interp') %this is to make the transition between values continuous,
     %instedad of discontinuously between pixels
-    colormap(Gamma_II)
+    %colormap(Gamma_II)
     hold on;
     plot(vessel)
-    colorbar %colorbar
-    view(2) %2D view
+    c=colorbar; %colorbar
+      ylabel(c, 'ds/dLp');
     plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
      [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
      xlabel('R (m)')
     ylabel('Z (m)')
-     title(sprintf('log10(ds/d \varphi [m]))  1000c at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
+     title(sprintf('log10(ds/dLp)  500c at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
               
      
      %%%%End test plots field line%%%%%%%
@@ -2358,12 +2374,11 @@ Gas_type=["H_2","He"];
     loglog(p,Emin(10,p,C_1(1),C_2(1)))
     hold on
     loglog(p,Emin(40,p,C_1(1),C_2(1)))
-    loglog(p,Emin(400,p,C_1(1),C_2(1)))
-    loglog(p,Emin(1000,p,C_1(1),C_2(1)))
-    loglog(p,abs(E)*ones(size(p)),'k-')
+    loglog(p,Emin(100,p,C_1(1),C_2(1)))
+    loglog(p,abs(E)*ones(1,length(p)),'k-')
     xlabel('Prefill pressure (Torr)')
     ylabel('E_{min} (V/m)')
-    legend('L=10m','L=40m','L=400m (GlobusM)','L=1000m','Actual E')
+    legend('L=10m','L=50m (GlobusM)','L=100m','Actual E')
     title(sprintf('Paschen curve, Gas=%s',Gas_type(1))); %d for numbers
     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
     %
@@ -2413,12 +2428,12 @@ K_B=1.380649*10^(-23); %J K^-1
 %     title('Breakdown duration (starts at t=0, finish at the y axis time) L=70m')
 %     
     %Plot3 varying E,p
-    E=linspace(0.1,5e1,1000);  %[Tor]
+    Ep=linspace(0.1,5e1,1000);  %[Tor]
     p=linspace(1e-5,1e-3,1000);  %[Tor]
     
     %Have to a meshgrid with p and E so that all the values of E are combined
     %with the p, and viceversa, which is was I want to see.
-    [p,E]=meshgrid(p,E);
+    [p,Ep]=meshgrid(p,Ep);
     
     %To plot this, will do as a I did with L inside the vessel. Since there
     %are problems with negative values, with substitute them with NaN. Have
@@ -2434,15 +2449,15 @@ K_B=1.380649*10^(-23); %J K^-1
     
         for i_p=1:length(p)
         
-            for i_E=1:length(E)
+            for i_E=1:length(Ep)
             
-                tau(i_p,i_E)=tau_bd(E(i_p,i_E),p(i_p,i_E),L_plot(i_L),C_1,C_2); %[s] time 
+                tau(i_p,i_E)=tau_bd(Ep(i_p,i_E),p(i_p,i_E),L_plot(i_L),C_1,C_2); %[s] time 
             end
         end
       time_Ep_loop=toc  
         %Plot
         figure;
-        contourf(p,E,log10(tau*1e3));
+        contourf(p,Ep,log10(tau*1e3));
         %contourf(p,E,tau);
         shading('interp') %this is to make the transition between values continuous,
                                     %instedad of discontinuously between pixels
@@ -2566,39 +2581,11 @@ I_rad_wall= j_rad_wall*2*pi*0.2 %Pasma current [A], Assuming circular plasma of 
 %@@@@@@Functions for the breakdown integration@@@@
 %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    %1) Field line integrator function
-        %this solves the field line eq, using phi as the independent
-        %variable, so the derviatvies are dr/dphi and dz/dphi
-    
-    
-    function [results]=Field_LineIntegrator(phi,rzLU,Br_interpn,Bz_interpn,Bphi_interpn)
-    %rzL=[r z L U]
-   
-    %First, the field needs to be evaluated at the point (r,phi,z):
-    
-    Br_eval=Br_interpn(rzLU(1),rzLU(2));
-    Bphi_eval=Bphi_interpn(rzLU(1),rzLU(2));
-    Bz_eval=Bz_interpn(rzLU(1),rzLU(2));    
-    Bpol_eval=sqrt(Br_eval^2+Bz_eval^2);
-    
-    %With the field, the eq to solve is:
-    
-    dr_dphi=rzLU(1)*Br_eval/Bphi_eval;
-    dz_dphi=rzLU(1)*Bz_eval/Bphi_eval;
-    dlength_dphi=rzLU(1)*sqrt(Bphi_eval^2+Bpol_eval^2)/Bphi_eval;
-    dU_Vloop_dphi=1/(2*pi*rzLU(1))*dlength_dphi; %pseudo potential U/V_loop
-    
-    results=zeros(4,1); %column vector to group the results
-    results(1)=dr_dphi;
-    results(2)=dz_dphi;
-    results(3)=dlength_dphi;
-    results(4)=dU_Vloop_dphi;
-    
-    end
-
+  
      %2) Field line integrator function with Lp
         %this solves the field line eq, using Lp (poloidal length) 
             %as an independent variable
+        %way more faster than with phi (5 min when Lmax=3000m, 15 inside points)
     
     
     function [results]=Field_LineIntegrator_Lp(Lp,rzLphiU,Br_interpn,Bz_interpn,Bphi_interpn)
@@ -2620,7 +2607,6 @@ I_rad_wall= j_rad_wall*2*pi*0.2 %Pasma current [A], Assuming circular plasma of 
     dz_dLp=Bz_eval/Bpol_eval;
     dlength_dLp=sqrt(1+(Bphi_eval/Bpol_eval)^2);
     dU_Vloop_dLp=1/(2*pi*rzLphiU(1))*dlength_dLp; %pseudo potential U/V_loop
-                %transfomed fomr phi to lp variable
     
     results=zeros(5,1); %column vector to group the results
     results(1)=dr_dLp;
