@@ -430,8 +430,9 @@ V_loop=abs(mu0*turns(iSol)/(ZMax_Sol-ZMin_Sol)*pi*RSol^2*slope)     %[V] 1 loop 
 %Vloop=0.6V for 0.10s T ramp Sol. Too low still 
 %Vloop=1.2V for 0.05(5ms) T ramp Sol, a bit low yet, but time is too low
 
-E=V_loop/(2*pi*0.45)            %[V/m]
+E_Rgeo=V_loop/(2*pi*0.45)            %[V/m] Electric field by Sol only, at RGeo
 
+E= @(R) V_loop./(2*pi*R); %[V/m] Electric field as a function of R, by Sol only!
 
 % %% Loop for Paschen plot
 % 
@@ -1716,7 +1717,6 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         options = odeset('OutputFcn',@ode_progress_bar,'Events',event_colission_wall,'AbsTol',1e-10,'RelTol',1e-6); 
                                     %I include a fiesta funciton to show the progress of the ode
 
-        tic              %to know the time
         %%%%%%%%SINGLE FIELD LINE TRACER
 
         %Single integrator and plotter of lines
@@ -1767,7 +1767,6 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
             RZLPhiU_end(i,4)=rzLphiU_fieldline(end,4);   
             RZLPhiU_end(i,5)=rzLphiU_fieldline(end,5);
         end
-       time_int_Lp=toc           %time of the ode
         
        %To store start points that do not collide: first I get the index of both R
         %and Z, but together, since they do not collide if oth R and Z are greater
@@ -1846,7 +1845,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         saveas(gcf, strcat(FigDir,Filename,FigExt));
         
         %Plot Lloyd criteria
-        Lloyd=E.*FieldsBreak.VV.Bphi./FieldsBreak.VV.Bpol;
+        Lloyd=E(R_in).*FieldsBreak.VV.Bphi./FieldsBreak.VV.Bpol;
         
         figure;
         contourf(R_in,Z_in,log10(Lloyd),'ShowText','on')
@@ -1872,9 +1871,16 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         saveas(gcf, strcat(FigDir,Filename,FigExt));
         
         
-        %Experimental
+        %%%%Experimental, E_rel plot, to predict where the gas breaks down
+        
+        p_test=5*10^-5; %Tor
+        E_RZmin=C_2*p_test./(log(C_1*p_test*L_int)); %E min, Paschen, but 2D
+        
+        E_RZmin(E_RZmin<0)=NaN; %when Emin<0, there is no breakdwon, so NaN not
+                    %to plot it
+        
         figure;
-        contourf(r_insVV_noLimit,z_insVV_noLimit,U_int./L_int*V_loop,10)
+        contourf(r_insVV_noLimit,z_insVV_noLimit,U_int./L_int*V_loop./E_RZmin)
         %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
         hold on
         hh=plot(vessel);
@@ -1883,7 +1889,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         set(hh, 'EdgeColor', 'k')
         colormap(Gamma_II)
         c=colorbar; %colorbar
-        ylabel(c, 'U/L (m^-1)');
+        ylabel(c, 'E_rel');
         view(2) %2D view
         plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
             [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
@@ -1891,7 +1897,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         xlabel('R (m)')
         ylabel('Z (m)')
         %title(sprintf('Pseudo potential  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
-        title(sprintf('U/L at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
+        title(sprintf('E_rel at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
         Filename = 'U_L';
         Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
         saveas(gcf, strcat(FigDir,Filename,FigExt));
@@ -1908,25 +1914,50 @@ time_loopRamp=toc %time loop for ramp time
     %%Plots L_emp and I_passiveVV
     
     figure;
-    plot(T_ramp_Sol_loop,L_emp)
-    xlabel('t_rd (ms)')
-    ylabel('L_emp (m)')
+    plot(2*T_ramp_Sol_loop,L_emp,'*-')
+    xlabel('t_{rd} (ms)')
+    ylabel('L_{emp} (m)')
     title('L empirical vs ramp-down time')
     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        Filename = 'L_emp';
-        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        Filename = 'L_emp_vs_ramp_down';
         saveas(gcf, strcat(FigDir,Filename,FigExt));
 
     figure;
-    plot(T_ramp_Sol_loop,I_PassiveVV)
-    xlabel('t_rd (ms)')
-    ylabel('I_VV (kA)')
-    title('I_VV vs ramp-down time')
+    plot(2*T_ramp_Sol_loop,I_PassiveVV,'*-')
+    xlabel('t_{rd} (ms)')
+    ylabel('I_{VV} (kA)')
+    title('I_{VV} at t=0ms vs ramp-down time')
     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        Filename = 'L_emp';
-        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        Filename = 'I_VV_vs_ramp_down'; 
         saveas(gcf, strcat(FigDir,Filename,FigExt));        
-    
+
+        
+        figure;
+        contourf(R_in,Z_in,1./R_in.^2,'ShowText','on')
+        %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
+        hold on
+        hh=plot(vessel);
+        set(hh, 'EdgeColor', 'k')
+        hh=plot(coilset);
+        set(hh, 'EdgeColor', 'k')
+        colormap(Gamma_II)
+        c=colorbar; %colorbar
+        ylabel(c, 'log10(E*Bphi/Bpol (V/m))');
+        view(2) %2D view
+        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+        xlabel('R (m)')
+        ylabel('Z (m)')
+        %title(sprintf('Lloyd criteria  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
+        title(sprintf('1/R_in^2 at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
+       
+        
+        
+%% Earths field:
+        [Field_EarthGrid Field_Earth]=EarthField(R_in,Z_in)
+     %%   
+        
 % %%
 % figure;
 % subplot(1,2,2)
@@ -2375,7 +2406,7 @@ Gas_type=["H_2","He"];
     hold on
     loglog(p,Emin(40,p,C_1(1),C_2(1)))
     loglog(p,Emin(100,p,C_1(1),C_2(1)))
-    loglog(p,abs(E)*ones(1,length(p)),'k-')
+    loglog(p,abs(E_Rgeo)*ones(1,length(p)),'k-')
     xlabel('Prefill pressure (Torr)')
     ylabel('E_{min} (V/m)')
     legend('L=10m','L=50m (GlobusM)','L=100m','Actual E')
@@ -2392,7 +2423,7 @@ Gas_type=["H_2","He"];
     loglog(p,Emin(40,p,C_1(2),C_2(2)))
     loglog(p,Emin(400,p,C_1(2),C_2(2)))
     loglog(p,Emin(1000,p,C_1(2),C_2(2)))
-    loglog(p,abs(E)*ones(size(p)),'k-')
+    loglog(p,abs(E_Rgeo)*ones(size(p)),'k-')
     xlabel('Prefill pressure (Torr)')
     ylabel('E_{min} (V/m)')
     legend('L=10m','L=40m','L=400m (GlobusM)','L=1000m','Actual E')
