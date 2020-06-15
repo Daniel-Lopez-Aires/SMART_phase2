@@ -1871,6 +1871,31 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);
         saveas(gcf, strcat(FigDir,Filename,FigExt));
         
         
+         figure;
+        contourf(R_in,Z_in,log10(Lloyd),'ShowText','on')
+        %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
+        hold on
+        hh=plot(vessel);
+        set(hh, 'EdgeColor', 'k')
+        hh=plot(coilset);
+        set(hh, 'EdgeColor', 'k')
+        colormap(Gamma_II)
+        c=colorbar; %colorbar
+        ylabel(c, 'log10(E*Bphi/Bpol (V/m))');
+        view(2) %2D view
+        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+        xlabel('R (m)')
+        ylabel('Z (m)')
+        axis([0,1,0,1])
+        %title(sprintf('Lloyd criteria  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
+        title(sprintf('Lloyd criteria at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
+        Filename = 'LLoydReduced';
+        Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+        saveas(gcf, strcat(FigDir,Filename,FigExt));
+        
+        
         %%%%Experimental, E_rel plot, to predict where the gas breaks down
         
         p_test=5*10^-5; %Tor
@@ -1930,33 +1955,28 @@ time_loopRamp=toc %time loop for ramp time
     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
         Filename = 'I_VV_vs_ramp_down'; 
         saveas(gcf, strcat(FigDir,Filename,FigExt));        
-
+     
+  %Plot Vloop
+  
+  V_loop=@(t_rd) pi*RSol^2*mu0*turns(iSol)/(2*ZMax_Sol)*2*I_Sol_max./t_rd;
         
-        figure;
-        contourf(R_in,Z_in,1./R_in.^2,'ShowText','on')
-        %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
-        hold on
-        hh=plot(vessel);
-        set(hh, 'EdgeColor', 'k')
-        hh=plot(coilset);
-        set(hh, 'EdgeColor', 'k')
-        colormap(Gamma_II)
-        c=colorbar; %colorbar
-        ylabel(c, 'log10(E*Bphi/Bpol (V/m))');
-        view(2) %2D view
-        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
-        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        %title(sprintf('Lloyd criteria  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
-        title(sprintf('1/R_in^2 at t=%dms for %dms',time_loop(loop)*1e3,T_ramp_Sol*2))
-       
+  figure;
+  plot(5*1e-3,V_loop(5*1e-3),'*','MarkerSize',10)
+  hold on
+  plot(10*1e-3,V_loop(10*1e-3),'*','MarkerSize',10)
+  plot(20*1e-3,V_loop(20*1e-3),'*','MarkerSize',10)
+  plot(50*1e-3,V_loop(50*1e-3),'*','MarkerSize',10)
+  plot(linspace(5,50)*1e-3,V_loop(linspace(5,50)*1e-3),'k')
+  legend('5ms','10ms','20ms','50ms')
+  xlabel('t_{rd} (ms)')
+  ylabel('V_{loop} (V)')      
+    title('V_{loop} at t=0ms vs ramp-down time')
+    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+        Filename = 'V_loop_vs_ramp_down'; 
+        saveas(gcf, strcat(FigDir,Filename,FigExt));                
         
-        
-%% Earths field:
+%%%Earths field:
         [Field_EarthGrid Field_Earth]=EarthField(R_in,Z_in)
-     %%   
         
 % %%
 % figure;
