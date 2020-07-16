@@ -2119,6 +2119,7 @@ Emin= @(L,p,C1,C2) C2*p./log(C1*p*L); %Min E as Paschen state
        %colormap('hot') 
        hold on;
         plot(p_single,E(param_equil.rin)*ones(length(p_single),1),'r-','LineWidth',1.15)
+        plot(p_single,E_Rgeo*ones(length(p_single),1),'r--','LineWidth',1.15)
         c=colorbar; %colorbar
         ylabel(c, 'log10(tau_{ava} (ms))');
         view(2) %2D view
@@ -2127,7 +2128,7 @@ Emin= @(L,p,C1,C2) C2*p./log(C1*p*L); %Min E as Paschen state
         set(gca,'Xscale','log') %para poner el eje x en log   
         set(gca,'Yscale','log') %para poner el eje x en log 
         grid on
-        title(sprintf('Avalanche time for L=%3.1f m',L_plot(i_L)))
+        title(sprintf('Avalanche time for L=%3.1f m, ph2',L_plot(i_L)))
         %title(sprintf('time radiation wal[ms]) for L=%d m',L_plot(i_L)))
         set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG      
         Filename = 'tau_ava';
@@ -2154,10 +2155,11 @@ I_rad_wall= j_rad_wall*2*pi*0.2 %Pasma current [A], Assuming circular plasma of 
     loglog(p_single,Emin(70,p_single,C_1(1),C_2(1)),'LineWidth',0.95)
     loglog(p_single,Emin(100,p_single,C_1(1),C_2(1)),'LineWidth',0.95)
     loglog(p_single,E(param_equil.rin)*ones(length(p_single),1),'r-','LineWidth',1.15)
+    loglog(p_single,E_Rgeo*ones(length(p_single),1),'r--','LineWidth',1.15)
     xlabel('Prefill pressure (Torr)')
     ylabel('E_{min} (V/m)')
-    legend('L=20m','L=50m','L=70m','L=100m','SMART E')
-    title(sprintf('Paschen curve, Gas=%s',Gas_type(1))); %d for numbers
+    legend('L=20m','L=50m','L=70m','L=100m','E(Rin)','E(Rgeo)')
+    title(sprintf('Paschen curve ph2, Gas=%s',Gas_type(1))); %d for numbers
     set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
     axis([10^-5 10^-3 10^-1 50])
     Filename = 'Paschen_ava';
