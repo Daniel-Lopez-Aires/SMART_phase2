@@ -1,5 +1,5 @@
 %% SEVILLE SPHERICAL TOKAMAK STIMATION
-%V2C2 (the winner). PHASE 1, REDUCED SIZE
+%V2C2 (the winner). PHASE 2, REDUCED SIZE
 %
 %Daniel López Aires // danlopair@alum.us.es
 %Partially merged with Scott's code
@@ -1092,6 +1092,27 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
     
 %Plots!
 
+  %Quiver plot Bpol
+        figure;
+        quiver(R_in,Z_in,FieldsBreak.VV.Br,FieldsBreak.VV.Bz,'AutoScale','off')
+        hold on;
+        hh=plot(vessel);
+        set(hh, 'EdgeColor', 'k')
+        hh=plot(coilset);
+        set(hh, 'EdgeColor', 'k')
+        colormap(Gamma_II)
+        view(2) %2D view
+        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
+        plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
+        [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'k.--')
+        axis equal
+        xlabel('R (m)')
+        ylabel('Z (m)')
+        title(sprintf('B_{pol}  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))
+        %title(sprintf('B_{pol} t=%dms for simu %d',time_loop(loop)*1e3,sen))
+        Filename = 'Bpol_quiver';
+        %Filename= sprintf('%s_simu_%d',Filename,sen);      
+        saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt));         
   %Bpol 
         figure; 
         %contourf(R_in,Z_in,log10(abs(Bpol_ins_vessel)),'EdgeColor','none');
