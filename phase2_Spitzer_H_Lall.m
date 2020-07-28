@@ -577,6 +577,7 @@ V_PF_input = NaN(nTime,nPF);            %Coil voltages are initiated to zero
     title('Input currents ph2')
     %title(sprintf('I_{{input}} for simu %d',sen))
     legend('Sol','PF1','PF2','Div1','Div2')
+    grid on
     %%%optinos for tfg
     set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
     set(gca, 'FontSize', 13, 'LineWidth', 0.75);                    %<- Set properties TFG
@@ -785,6 +786,7 @@ I_Passive_VV=sum(I_Passive,2);
             plot(time_adaptive*1e3,Ip_output/(1e3))
             ylabel('I (kA)')
             title('Dynamic response SMART ph2')
+            grid on
             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
             %set(gca,'YLim',[-5 35]);
             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
@@ -794,6 +796,7 @@ I_Passive_VV=sum(I_Passive,2);
             hold on
             plot(time_adaptive*1e3,Vp_output/(1e3))
             ylabel('V (kV)')
+            grid on
             legend('Sol','PF2','PF3','Div1','Div2','Plasma')
             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
             %set(gca,'YLim',[-1.500 1.500]);
@@ -803,6 +806,7 @@ I_Passive_VV=sum(I_Passive,2);
             plot(time_adaptive*1e3,I_Passive_VV/(1e3))
             xlabel(' time (ms)')
             ylabel('I_{passive} (kA)')
+            grid on
             set(gca,'XLim',[min(time*1e3) max(time*1e3)]);
             %set(gca,'YLim',[-800 800]);
             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
@@ -814,7 +818,7 @@ I_Passive_VV=sum(I_Passive,2);
 
           %v{
             figure;           
-            plot(time_adaptive*1e3,Ip_output/(1e3))
+            plot(time_adaptive*1e3,Ip_output/(1e3)), grid on
             ylabel('I_p (kA)')
             xlabel(' time (ms)')
             title('Plasma current ph2')
@@ -826,7 +830,7 @@ I_Passive_VV=sum(I_Passive,2);
             saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt)); 
             
             figure;
-            plot(time_adaptive*1e3,I_Passive_VV/(1e3))
+            plot(time_adaptive*1e3,I_Passive_VV/(1e3)), grid on
             xlabel(' time (ms)')
             ylabel('I_{VV} (kA)')
             title('Net eddy current on VV ph2')
@@ -836,8 +840,67 @@ I_Passive_VV=sum(I_Passive,2);
             %Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
             saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt)); 
   % }          
-          
-     %{     
+      
+  %Compute maximum change in each coil current - !!! MAKE THIS INTO A FUNCTION !!!
+    for j=1:length(I_PF_output(1,:))
+        for i=2:length(time_adaptive)-1
+            Delta_Ip_output(i) = ( (Ip_output(i)-Ip_output(i-1))/(time_adaptive(i)-time_adaptive(i-1)) )/1000;  %[A/ms]
+            Delta_IPFoutput(i,j) = ( (I_PF_output(i,j)-I_PF_output(i-1,j))/(time_adaptive(i)-time_adaptive(i-1)) )/1000;  %[A/ms]
+            Delta_VPFoutput(i,j) = ( (V_PF_output(i,j)-V_PF_output(i-1,j))/(time_adaptive(i)-time_adaptive(i-1)) )/1000;  %[V/ms]
+        end 
+    end 
+    %Extremal values
+MinDelta_Ipoutput = min(Delta_Ip_output); MaxDelta_Ipoutput = max(Delta_Ip_output);    %[A/ms]
+MinDelta_IPFoutput = min(Delta_IPFoutput); MaxDelta_VPFoutput = max(Delta_VPFoutput);  %[A/ms]
+MinDelta_VPFoutput = min(Delta_VPFoutput); MaxDelta_IPFoutput = max(Delta_IPFoutput);  %[V/ms]
+
+    %Plot of the delta
+    figure;
+    plot(time_adaptive(2:end)*1e3,Delta_IPFoutput(:,iSol)*1e-3) 
+    hold on    
+    plot(time_adaptive(2:end)*1e3,Delta_IPFoutput(:,iPF1)*1e-3)
+    plot(time_adaptive(2:end)*1e3,Delta_IPFoutput(:,iPF2)*1e-3)
+    plot(time_adaptive(2:end)*1e3,Delta_IPFoutput(:,iDiv1)*1e-3)
+    plot(time_adaptive(2:end)*1e3,Delta_IPFoutput(:,iDiv2)*1e-3)
+    xlabel('t (ms)')
+    ylabel('Delta I (kA/ms)')
+    title('Delta I_{PF}')
+    legend('Sol','PF2','PF3','Div1','Div2')
+    set(gca,'XLim',[min(time*1e3) max(time*1e3)]);    
+    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG    
+    Filename = 'Delta_IPF';
+    %Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+    saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt)); 
+    
+    figure;
+    plot(time_adaptive(2:end)*1e3,Delta_VPFoutput(:,iSol)*1e-3) 
+    hold on    
+    plot(time_adaptive(2:end)*1e3,Delta_VPFoutput(:,iPF1)*1e-3)
+    plot(time_adaptive(2:end)*1e3,Delta_VPFoutput(:,iPF2)*1e-3)
+    plot(time_adaptive(2:end)*1e3,Delta_VPFoutput(:,iDiv1)*1e-3)
+    plot(time_adaptive(2:end)*1e3,Delta_VPFoutput(:,iDiv2)*1e-3)
+    xlabel('t (ms)')
+    ylabel('Delta V (kV/ms)')
+    title('Delta V')
+    legend('Sol','PF2','PF3','Div1','Div2')
+    set(gca,'XLim',[min(time*1e3) max(time*1e3)]);    
+    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG    
+    Filename = 'Delta_VPF';
+    %Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+    saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt));     
+    
+    figure;
+    plot(time_adaptive(2:end)*1e3,Delta_Ip_output(:)*1e-3) 
+    xlabel('t (ms)')
+    ylabel('Delta I_p (kA/ms)')
+    title('Delta Ip' )
+    set(gca,'XLim',[min(time*1e3) max(time*1e3)]);    
+    set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG    
+    Filename = 'Delta_VPF';
+    %Filename= sprintf('%s_Trampdown_%dms',Filename,2*T_ramp_Sol);    
+    saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt));        
+    
+  %{     
     %HAVE TO CHECK Vp, is not closer to Vloop ==>?¿¿?¿?
     %HAVE TO DIG IN uFinal (x), because it has weird things
         %from 1 to Vessel(n) has eddys
@@ -1255,7 +1318,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
             %9 lines, the line with Bpol min, and the 8 surroundings. 
          %However can compute the lines in all the VV
       
-   IntMethod='Phi';   %Lp faster, Phi for debug!!!      % ''Phi'or 'Lp' to switch the integration mode 
+   IntMethod='Lp';   %Lp faster, Phi for debug!!!      % ''Phi'or 'Lp' to switch the integration mode 
 
         %Grid
         %I redefine the grid to compute the connection length, for less computer
@@ -1392,7 +1455,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                 y0=y0(2:end,:);
                 
                %2)Independt variable values, t0
-                 t_values=1000000; %1000            %Max value of the independent variable
+                 t_values=10000; %1000            %Max value of the independent variable
                  n_iter_t=30000000; %3000000 on s1-14                 %Integer, number of values for tSpan
                  tSpan=linspace(0,t_values,n_iter_t);            %the range of values of independant variable
                     %TOO LITTLE FOR s1-19, MOST LINES DO NOT COLLIDE NOR
@@ -1402,14 +1465,14 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                     FieldsBreak.interpn.Bz,FieldsBreak.interpn.Bphi);                
                 
                 %4) Integration
-                        %% %%%%%%SINGLE FIELD LINE TRACER and plotter
+                        %%%%%%%%SINGLE FIELD LINE TRACER and plotter
 
                         %need to find i for the chosen R,Z value in r0_z0_L0_U0.
                         %I= 85 for a line inside, 49 for a max L outside, 152 for the
                         %outward arm (Z>0). 135 for the outward Z<0 line. 64 for the upper
                         %arm
         
-                        i=652 %looked in the y0
+                        i=532%looked in the y0
                         [t_fieldline, y_fieldline]=ode45(odefun,tSpan,y0(i,:),options);    
     
                         %To save the last values of R,Z,L
@@ -1430,7 +1493,6 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                             set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
                             %legend('Starting point (Point with less Bpol)','Field line',...
                         %%%END ONE LINE TRACER
-                            %%
                         for i=1:length(y0)
                             fprintf('Iter %d de %d',i,length(y0))
                             [t_fieldline, y_fieldline]=ode45(odefun,tSpan,y0(i,:),options);        %ode15s Carlos
@@ -1460,14 +1522,14 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
             
                %2)Independt variable values, t0
                  t_values=10000; %10 for debug                           %Cycles(toroidal turns)
-                 n_iter_t=300000;         %3000                         %Integer, number of values for tSpan
+                 n_iter_t=3000000000000;         %3000                         %Integer, number of values for tSpan
                  tSpan=linspace(0,2*pi*t_values,n_iter_t);    %the range of values of independant variable
                
                %3)Odefun 
                  odefun= @(phi, rzLU) Field_LineIntegrator(phi,rzLU,FieldsBreak.interpn.Br,...
                     FieldsBreak.interpn.Bz,FieldsBreak.interpn.Bphi);               
                 %4) Integration
-                        %% %%%%%%SINGLE FIELD LINE TRACER and plotter
+                        %%%%%%%%SINGLE FIELD LINE TRACER and plotter
 
                         %need to find i for the chosen R,Z value in r0_z0_L0_U0.
                         %I= 85 for a line inside, 49 for a max L outside, 152 for the
@@ -1479,6 +1541,9 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                                     %672 for collision upper PF2
                                     %116 for colission with upper Div1
                                     %472 for coliision with lower wall (VV)
+                                    %652 point closer to 592 bu with very
+                                    %low L. Very close to PF2
+                                    %532 close too
                         [t_fieldline, y_fieldline t_event y_event]=ode45(odefun,tSpan,y0(i,:),options);    
     
                         %To save the last values of R,Z,L
@@ -1497,7 +1562,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                             y_fieldline(end,2),'g*','LineWidth',3)
                         title(sprintf('Single field line integration phi, L=%3.2f m ',L_single))
                         set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-                        %% %END ONE LINE TRACER
+                        %%%END ONE LINE TRACER
                 
                         for i=1:length(y0)
                             fprintf('Iter %d de %d',i,length(y0))
@@ -1623,7 +1688,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
      %%%Contour plots
       %1) L
         figure;
-        contourf(r_ins_VVL_contour,z_ins_VVL_contour,L_int,5,'ShowText','On')
+        contourf(r_ins_VVL_contour,z_ins_VVL_contour,L_int,5,'ShowText','Off')
         %surf(r_ins_VVL_contour,z_ins_VVL_contour,L_int,'EdgeColor','none'), shading('interp')
         view(2)
         hold on
@@ -2196,6 +2261,7 @@ Emin= @(L,p,C1,C2) C2*p./log(C1*p*L); %Min E as Paschen state
         %
         loglog(p,E(param_equil.rin)*ones(1,length(p)),'r-','LineWidth', 1.15)   
         loglog(p,E_Rgeo*ones(1,length(p)),'r--','LineWidth', 1.15) 
+        grid on
         xlabel('Prefill pressure (Torr)')
         ylabel('E_{min} (V/m)')
         legend('L=20m','L=50m','L=70m','L=100m','','VEST','','','GlobusM','','','SMART E(Rin)','SMART E (Rgeo)')
@@ -2293,6 +2359,7 @@ I_rad_wall= j_rad_wall*2*pi*0.2 %Pasma current [A], Assuming circular plasma of 
     loglog(p_single,Emin(100,p_single,C_1(1),C_2(1)),'LineWidth',0.95)
     loglog(p_single,E(param_equil.rin)*ones(length(p_single),1),'r-','LineWidth',1.15)
     loglog(p_single,E_Rgeo*ones(length(p_single),1),'r--','LineWidth',1.15)
+    grid on;
     xlabel('Prefill pressure (Torr)')
     ylabel('E_{min} (V/m)')
     legend('L=20m','L=50m','L=70m','L=100m','E(Rin)','E(Rgeo)')
@@ -2312,8 +2379,8 @@ I_rad_wall= j_rad_wall*2*pi*0.2 %Pasma current [A], Assuming circular plasma of 
   %interesting gases, H, He and Ar.
   
   lambda= @(C1,p) 1./(C1.*p); 
-  figure;
-  plot(p_single,lambda(C_1(1),p_single))
+  figure; 
+  plot(p_single,lambda(C_1(1),p_single)), grid on;
   %hold on;
   %plot(p,lambda(C_1(2),p))
   xlabel('p (Tor)')
