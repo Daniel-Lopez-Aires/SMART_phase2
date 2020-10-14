@@ -71,8 +71,8 @@ close all
 %Taken from the God Scott
 
 %Set maximum number of concurrent CPU threads in use
-NumThreads = 3; %6 is the max for my laptop
-NumThreads = maxNumCompThreads(NumThreads);
+%NumThreads = 3; %6 is the max for my laptop
+%NumThreads = maxNumCompThreads(NumThreads);
 
 
 %Define figure extension
@@ -1499,98 +1499,19 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
             ylabel('Z (m)')
             title(sprintf('meshgrid for the integration with %d^2 points',n_pnts_insideL))
 
-        %To remove the points at the VV:
+        %To remove the points at the VV:            %NOT NECCESARY!!!
          %r_inside_VVL=r_inside_VVL(2:end-1);
          %z_inside_VVL=z_inside_VVL(2:end-1); 
-        
-       %Now, if the coils are inside, the grid points there have to be removed because ode 'se raya', and spent too long time
+            
+       %Define coils limit points
        global Rin_coils Rout_coils Zdown_coils Zup_coils
        
        Rin_coils=[R_PF2 R_Div1 R_Div2]-[width_PF2 width_Div1 width_Div2]/2; %[m] inner R of coilset (no SOl and PF1 (outside))
        Rout_coils=[R_PF2 R_Div1 R_Div2]+[width_PF2 width_Div1 width_Div2]/2;   %[m]outer R of coilset (no SOl and PF1 (outside))
        Zdown_coils=[Z_PF2 Z_Div1 Z_Div2]-[height_PF2 height_Div1 height_Div2]/2;   %[m]lowerZ of coilset (no SOl and PF1 (outside))
        Zup_coils=[Z_PF2 Z_Div1 Z_Div2]+[height_PF2 height_Div1 height_Div2]/2;    %[m]higher Z of coilset (no SOl and PF1 (outside))    
-            %They are good
-        
-       %Lets rehape the meshgrid to do the loop to remove points
-       r_ins_VVL=reshape(r_ins_VVL,length(r_ins_VVL)^2,1);
-       z_ins_VVL=reshape(z_ins_VVL,length(z_ins_VVL)^2,1);
-       
-    
-        for co=1:length(Rin_coils) %at each iter, removes the grid points inside the coils
-              StoreRZ=[0 0]; %initialization of stored grid points
-            for i=1:length(r_ins_VVL) %Have to check each point
-                Point=[r_ins_VVL(i) z_ins_VVL(i)]; %grid point to test            
-                
-                switch sign(Point(2)) %First lets check if Z><0
-                    
-                    case 1 %z>0
-                
-                    if Point(1)<Rin_coils(co) | Point(1)>Rout_coils(co) %R out of the coil
-                                                                                                   %All Z are good
-                               StoreRZ=[StoreRZ; Point]; %store of good points                                                                                           
-                    
-                    elseif  Point(1)>Rin_coils(co) | Point(1)<Rout_coils(co) %R inside of the coil
-                            if Point(2)<Zdown_coils(co) | Point(2)>Zup_coils(co)  %Z out coil
-                                StoreRZ=[StoreRZ; Point]; %store of good points
-                            end
-                    end
-                        
-                    case -1 %z<0
-                
-                    if Point(1)<Rin_coils(co) | Point(1)>Rout_coils(co) %R out of the coil
-                                                                                                   %All Z are good
-                               StoreRZ=[StoreRZ; Point]; %store of good points                                                                                        
-                    
-                    elseif  Point(1)>Rin_coils(co) | Point(1)<Rout_coils(co) %R inside of the coil
-                            if Point(2)>-Zdown_coils(co) | Point(2)<-Zup_coils(co)  %Z out coil
-                                StoreRZ=[StoreRZ; Point]; %store of good points
-                            end
-                    end  
-                        
-                end             
-            end  
-            StoreRZ=StoreRZ(2:end,:); %remove first row, the initialization one
-            r_ins_VVL=StoreRZ(:,1); %to use the grid created on the following coil loop
-            z_ins_VVL=StoreRZ(:,2); %to use the grid created on the following coil loop          
-        end             
+
      
-     %Lets reshape it again to do the contour plots later (both are
-     %vectors)
-     r_ins_VVL_contour=reshape(r_ins_VVL,floor(length(r_ins_VVL)/2),[]); %arbitrary reshape
-     z_ins_VVL_contour=reshape(z_ins_VVL,floor(length(z_ins_VVL)/2),[]); %arbitrary reshape
-                
-        %Plot
-                figure;
-                subplot(1,2,1)
-                plot(StoreRZ(:,1),StoreRZ(:,2),'r.')
-                hold on
-                plot(vessel)
-                axis equal
-                title(sprintf('iter %d',co))   
-                subplot(1,2,2)
-                plot(StoreRZ(:,1),StoreRZ(:,2),'r.')
-                hold on
-                plot(vessel)
-                plot(coilset)
-                axis equal
-                title(sprintf('iter %d',co))    
-                
-                figure;
-                plot(StoreRZ(:,1),StoreRZ(:,2),'r.')
-                hold on
-                plot(vessel)
-                plot(coilset)
-                xlabel('R(m)')
-                ylabel('Z(m)')
-                axis equal
-                title('Grid for line tracing')
-                Filename = 'Grid_tracing';
-                %Filename= sprintf('%s_simu_%d',Filename,sen);     
-                saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt)); 
-                print(gcf,strcat(FigDir,ProjectName,Filename,'.eps'),'-depsc2')   
-    %%%End grid
-    
     %%%Begin integration
     
     L_max=10000;                             %[m] max L value for the integration; when L achieves
@@ -1603,8 +1524,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
      options = odeset('OutputFcn',@ode_progress_bar,'Events',event_colission,'AbsTol',1e-10,'RelTol',1e-6); 
 %                                     %I include a Fiesta funciton to show the progress of the ode
    
-                                    
-                                    
+                                 
    %Both integrators are programmed, so to swich between them will use a
    %switch (xD)
    tic          %to measure time the intergration takes
@@ -1615,10 +1535,12 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                  y0=[0 0 0 0 0];                    %(r0,z0,L0,phi0,U0) starting points
                     %note it has to be r z L for using the same event function
 
-                    for i=1:length(r_ins_VVL)        
-                         points=[r_ins_VVL(i) z_ins_VVL(i) 0 0 0];      %r z L phi U        
+                    for i=1:length(r_inside_VVL)     
+                        for j=1:length(z_inside_VVL)
+                         points=[r_inside_VVL(i) z_inside_VVL(j) 0 0 0];      %r z L phi U        
                             %U(0)=0 (arbitrary)  
-                         y0=[ y0; points];                          
+                         y0=[ y0; points];      
+                        end
                     end 
                 %I have the additional point 0 0 0 form the begining, that i can remove
                 %easily with
@@ -1674,17 +1596,19 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                             y_end(i,4)=y_fieldline(end,4);           %Phi
                             y_end(i,5)=y_fieldline(end,5);           %U
                         end                 
-                        U_int=reshape(y_end(:,5),size(r_ins_VVL_contour,1),size(r_ins_VVL_contour,2));            
+                        U_int=reshape(y_end(:,5),size(r_ins_VVL,1),size(r_ins_VVL,2));            
         
         case 'Phi' %Lp as integration method
               %1) Starting points y0
                 y0=[0 0 0 0]; %r0,z0,L0,U0
                 %note it has to be r z fro using the same event function
 
-                for i=1:length(r_ins_VVL)        
-                        points=[r_ins_VVL(i) z_ins_VVL(i) 0 0];  %r z L phi U        
+                for i=1:length(r_inside_VVL)
+                    for j=1:length(z_inside_VVL)
+                        points=[r_inside_VVL(i) z_inside_VVL(j) 0 0];  %r z L phi U        
                             %U(0)=0 (arbitrary)  
-                        y0=[ y0; points];                          
+                        y0=[ y0; points];           
+                    end
                 end
                 %I have the additional point 0 0 0 form the begining, that i can remove
                 %easily with
@@ -1744,12 +1668,12 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                             y_end(i,3)=y_fieldline(end,3);           %L           
                             y_end(i,4)=y_fieldline(end,4);           %U
                         end 
-                        U_int=reshape(y_end(:,4),size(r_ins_VVL_contour,1),size(r_ins_VVL_contour,2));
+                        U_int=reshape(y_end(:,4),size(r_ins_VVL,1),size(r_ins_VVL,2));
         
     end         
    Time_Run_Integrator=toc     %Time spent by the integrator
    
-   L_int=reshape(y_end(:,3),size(r_ins_VVL_contour,1),size(r_ins_VVL_contour,2));
+   L_int=reshape(y_end(:,3),size(r_ins_VVL,1),size(r_ins_VVL,2));
     
    %Calc of average L on the null region
         index= y0(:,1)<=max(get(sensor_btheta,'r')) & y0(:,1)>=min(get(sensor_btheta,'r')) &...
@@ -1850,15 +1774,11 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                 RZ_no_collide(:,1)>VesselRMinInner & RZ_no_collide(:,2)<VesselZMaxInner...
                 & RZ_no_collide(:,2)>VesselZMinInner;
             RZ_no_collide=[RZ_no_collide(Index,1) RZ_no_collide(Index,2)];                
-           
-
-            
-            %%    
-    
+               
      %%%Contour plots
       %1) L
         figure;
-        surf(r_ins_VVL_contour,z_ins_VVL_contour,L_int)
+        contourf(r_ins_VVL,z_ins_VVL,L_int)
         %surf(r_ins_VVL_contour,z_ins_VVL_contour,L_int,'EdgeColor','none'), shading('interp')
         view(2)
         hold on
@@ -1885,44 +1805,8 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
         Filename = 'L_cont';
         %Filename= sprintf('%s_simu_%d',Filename,sen);     
         saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt));        
-
-        %1D to 2D plot
-        figure;
-        tri = delaunay(y0(:,1),y0(:,2));
-        plot(y0(:,1),y0(:,2),'.')
-        [r,c] = size(tri); %number of triangles there
-        trisurf(tri, y0(:,1), y0(:,2),y_end(:,3),'FaceAlpha',1,'EdgeColor','none'), shading('interp');
-        view(2)
-        colorbar
-        hold on                     %this is to make the transition between values continuous,                                                        %instedad of discontinuously between pixels
-        colormap(Gamma_II)
-        plot3([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],...
-            ones(1,5)*max(y_end(:,3)),'g.--','LineWidth', 2)
-        plot3(RZ_no_collide(:,1),RZ_no_collide(:,2),max(y_end(:,3))*ones(length(RZ_no_collide(:,2)),1),'m*')
-        hh=plot(vessel);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        hh=plot(coilset);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        colormap(Gamma_II)
-        c=colorbar; %colorbar
-        %axis equal
-        set(gca,'XLim',[0.1 1]);    %To plot upper side of the VV
-        set(gca,'YLim',[-0.9 0.9]);    %To plot upper side of the VV
-        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        ylabel(c, 'L(m)');
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        %legend('L','Field null region','Non colliding points')
-        %title(sprintf('L  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))   
-        %title(sprintf('L at t=%dms for simu %d',time_loop(loop)*1e3,sen))
-        title(sprintf('L at t=%d ms ph2',time_loop(loop)*1e3))   
-        Filename = 'L';        
-        saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt));   
-        print(gcf,strcat(FigDir,ProjectName,Filename,'.eps'),'-depsc2')    
         
+        %Plot of non colliding points
         figure;
         plot([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
             [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],'g.--','LineWidth', 2)
@@ -1948,7 +1832,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
         
       %2) Pseudo potential U/Vloop
         figure;
-        contourf(r_ins_VVL_contour,z_ins_VVL_contour,U_int,10)
+        contourf(r_ins_VVL,z_ins_VVL,U_int)
         %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
         hold on
         hh=plot(vessel);
@@ -1972,53 +1856,6 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
         %Filename= sprintf('%s_simu_%d',Filename,sen);     
         saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt)); 
         
-        %1D to 2D plot
-                %1D to 2D plot
-        figure;
-        tri = delaunay(y0(:,1),y0(:,2));
-        plot(y0(:,1),y0(:,2),'.')
-        [r,c] = size(tri); %number of triangles there
-        
-        switch IntMethod
-            
-            case 'Phi'
-                trisurf(tri, y0(:,1), y0(:,2),y_end(:,4),'FaceAlpha',1,'EdgeColor','none'), shading('interp');
-            
-            case 'Lp'
-                trisurf(tri, y0(:,1), y0(:,2),y_end(:,5),'FaceAlpha',1,'EdgeColor','none'), shading('interp');
-        end
-        view(2)
-        colorbar
-        hold on                     %this is to make the transition between values continuous,                                                        %instedad of discontinuously between pixels
-        colormap(Gamma_II)
-        plot3([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],...
-            ones(1,5)*max(y_end(:,3)),'g.--','LineWidth', 2)
-        plot3(RZ_no_collide(:,1),RZ_no_collide(:,2),max(y_end(:,3))*ones(length(RZ_no_collide(:,2)),1),'m*')
-        hh=plot(vessel);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        hh=plot(coilset);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        colormap(Gamma_II)
-        c=colorbar; %colorbar
-        %axis equal
-        set(gca,'XLim',[0.1 1]);    %To plot upper side of the VV
-        set(gca,'YLim',[-0.9 0.9]);    %To plot upper side of the VV
-        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        ylabel(c, 'U/V');
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        %legend('U/Vloop','Field null region','Non colliding points')
-        %title(sprintf('Pseudo potential  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))          
-        %title(sprintf('Pseudo potential at t=%dms for simu %d',time_loop(loop)*1e3,sen))
-        title(sprintf('U/V_{loop} at t=%d ms ph2',time_loop(loop)*1e3))
-        Filename = 'Pseudo';        
-        saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt));   
-        print(gcf,strcat(FigDir,ProjectName,Filename,'.eps'),'-depsc2')  
-        
-        
       %%%3)[Experimental] E_rel plot, to predict where the gas breaks down
         
         p_test=1*10^-4; %Tor
@@ -2027,7 +1864,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
                     %to plot it
         
         figure;
-        contourf(r_ins_VVL_contour,z_ins_VVL_contour,U_int./L_int*V_loop./E_RZmin)
+        contourf(r_ins_VVL,z_ins_VVL,U_int./L_int*V_loop./E_RZmin)
         %surf(r_insVV_noLimit,z_insVV_noLimit,U_int), shading('interp')
         hold on
         hh=plot(vessel);
@@ -2050,51 +1887,6 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
         %Filename= sprintf('%s_simu_%d',Filename,sen);   
         saveas(gcf, strcat(FigDir,ProjectName,Filename,FigExt)); 
         
-        %1D to 2D plot
-        
-                p_test=1*10^-4; %Tor
-        E_RZmin=C_2(1)*p_test./(log(C_1(1)*p_test*y_end(:,3))); %E min, Paschen, but 2D        
-        E_RZmin(E_RZmin<0)=NaN; %when Emin<0, there is no breakdwon, so NaN not
-                    %to plot it
-          figure;
-        tri = delaunay(y0(:,1),y0(:,2));
-        plot(y0(:,1),y0(:,2),'.')
-        [r,c] = size(tri); %number of triangles there        
-                switch IntMethod
-            
-            case 'Phi'
-                trisurf(tri, y0(:,1), y0(:,2),y_end(:,4)./y_end(:,3)*V_loop./E_RZmin,'FaceAlpha',1,'EdgeColor','none'), shading('interp');
-            
-            case 'Lp'
-                trisurf(tri, y0(:,1), y0(:,2),y_end(:,5)./y_end(:,3)*V_loop./E_RZmin,'FaceAlpha',1,'EdgeColor','none'), shading('interp');
-                end                         
-        view(2)
-        colorbar
-        hold on                     %this is to make the transition between values continuous,                                                        %instedad of discontinuously between pixels
-        colormap(Gamma_II)
-        %colormap(plasma)
-        plot3([min(r_sensors) min(r_sensors) max(r_sensors) max(r_sensors) min(r_sensors)],...
-            [min(z_sensors) max(z_sensors) max(z_sensors) min(z_sensors) min(z_sensors)],...
-            ones(1,5)*max(y_end(:,3)),'g.--','LineWidth', 2)
-        hh=plot(vessel);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        hh=plot(coilset);
-        set(hh, 'EdgeColor', 'k')
-        set(hh,'HandleVisibility','off');
-        c=colorbar; %colorbar
-        %axis equal
-        set(gca,'XLim',[0.1 1]);    %To plot upper side of the VV
-        set(gca,'YLim',[-0.9 0.9]);    %To plot upper side of the VV
-        set(gca, 'FontSize', 13, 'LineWidth', 0.75); %<- Set properties TFG
-        ylabel(c, 'E_{rel}');
-        xlabel('R (m)')
-        ylabel('Z (m)')
-        %legend('L','Field null region','Non colliding points')
-        %title(sprintf('L  at t=%d ms (iter %d/%d)',time_loop(loop)*1e3,loop,length(time_loop)))   
-        %title(sprintf('L at t=%dms for simu %d',time_loop(loop)*1e3,sen))
-        title(sprintf('E_{rel} at t=%d ms ph2',time_loop(loop)*1e3))   
-        Filename = 'U_L';        
 % }
 
 end    %end loop time (not in use right now)!!!!
@@ -2152,15 +1944,6 @@ L_emp_all=0.25*a_eff_L_emp_all'.*FieldsBreak.interpn.Bphi(y0(:,1),y0(:,2))./sqrt
         %title(sprintf('L at t=%dms for simu %d',time_loop(loop)*1e3,sen))
         title(sprintf('L_emp all at t=%d ms ph2',time_loop(loop)*1e3))   
         Filename = 'L_emp_all';        
-
-
-
-
-
-
-
-
-
 
 
 
