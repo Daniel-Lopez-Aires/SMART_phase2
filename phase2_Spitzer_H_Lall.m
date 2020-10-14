@@ -1858,7 +1858,7 @@ psi_null_ins_VV=psi_null_interpn(R_in,Z_in);    %contour plot!!!
      %%%Contour plots
       %1) L
         figure;
-        contourf(r_ins_VVL_contour,z_ins_VVL_contour,L_int,5,'ShowText','Off')
+        surf(r_ins_VVL_contour,z_ins_VVL_contour,L_int)
         %surf(r_ins_VVL_contour,z_ins_VVL_contour,L_int,'EdgeColor','none'), shading('interp')
         view(2)
         hold on
